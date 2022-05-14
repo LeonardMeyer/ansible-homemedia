@@ -1,0 +1,204 @@
+#jinja2: lstrip_blocks: "true", trim_blocks: "false"
+services:
+
+  deluge:
+    image: lscr.io/linuxserver/deluge:latest
+    container_name: deluge
+    ports:
+      - 8112:8112
+      - 58846:58846
+    environment:
+      - "PUID={{ uid }}"
+      - "PGID={{ gid }}"
+      - "TZ={{ timezone }}"
+      - UMASK_SET=022
+      - WEBUI_PORT=8112
+    volumes:
+     - "{{ app_dir }}/deluge/config:/config"
+     - "{{ torrents_dir }}:{{ torrents_dir }}"
+    labels:
+      - wud.tag.include=^\d+\.\d+\.\d+$$
+
+  # Switch to stable version when available
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:develop 
+    container_name: prowlarr
+    expose:
+      - "9696"
+    environment:
+      - "PUID={{ uid }}"
+      - "PGID={{ gid }}"
+      - "TZ={{ timezone }}"
+    volumes:
+      - "{{ app_dir }}/prowlarr/config:/config"
+      - "{{ torrents_dir }}/blackhole:/blackhole"
+    restart: unless-stopped
+    labels:
+      - wud.tag.include=^\d+\.\d+\.\d+-develop$$
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    expose:
+      - "8989"
+    environment:
+      - "PUID={{ uid }}"
+      - "PGID={{ gid }}"
+      - "TZ={{ timezone }}"
+    volumes:
+      - "{{ app_dir }}/sonarr/config:/config"
+      - "{{ root_dir }}:{{ root_dir }}"
+    restart: unless-stopped
+    labels:
+      - wud.tag.include=^\d+\.\d+\.\d+$$
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    expose:
+      - "7878"
+    environment:
+      - "PUID={{ uid }}"
+      - "PGID={{ gid }}"
+      - "TZ={{ timezone }}"
+    volumes:
+      - "{{ app_dir }}/radarr/config:/config"
+      - "{{ root_dir }}:{{ root_dir }}"
+    restart: unless-stopped
+    labels:
+      - wud.tag.include=^\d+\.\d+\.\d+$$
+
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    expose:
+      - "6767"
+    environment:
+      - "PUID={{ uid }}"
+      - "PGID={{ gid }}"
+      - "TZ={{ timezone }}"
+    volumes:
+      - "{{ app_dir }}/bazarr/config:/config"
+      - "{{ media_dir }}:{{ media_dir }}"
+    restart: unless-stopped
+    labels:
+      - wud.tag.include=^\d+\.\d+\.\d+$$
+
+  plex_server:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    ports:
+      - 32400:32400
+    environment:
+      - "PUID={{ uid }}"
+      - "PGID={{ gid }}"
+      - VERSION=docker
+      - "TZ={{ timezone }}"
+      - DOCKER_MODS=linuxserver/mods:plex-absolute-hama
+    volumes:
+      - "{{ app_dir }}/plex/config:/config"
+      - "{{ media_dir }}:{{ media_dir }}"
+    restart: unless-stopped
+    labels:
+      - wud.tag.include=^\d+\.\d+\.\d+$$
+      
+{% if enable_duplicati == true %}
+  duplicati:
+    image: lscr.io/linuxserver/duplicati:latest
+    container_name: duplicati
+    expose:
+      - "8200"
+    environment:
+      - "PUID={{ uid }}"
+      - "PGID={{ gid }}"
+      - "TZ={{ timezone }}"
+    volumes:
+      - "{{ app_dir }}/duplicati/config:/config"
+      - "{{ app_dir }}/duplicati/source:/source"
+      - "{{ root_dir }}:/backups"
+    restart: unless-stopped
+    labels:
+      - wud.tag.include=^\d+\.\d+\.\d+$$
+{% endif %}
+
+{% if enable_flaresolverr == true %}
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    expose:
+      - "8191"
+    environment:
+      - LOG_LEVEL=info
+      - "TZ={{ timezone }}"
+    restart: unless-stopped
+    labels:
+    - wud.tag.include=^\d+\.\d+\.\d+$$
+{% endif %}
+
+{% if enable_overseerr == true %}
+  overseerr:
+    image: lscr.io/linuxserver/overseerr:latest
+    container_name: overseerr
+    environment:
+    - "PUID={{ uid }}"
+    - "PGID={{ gid }}"
+    - "TZ={{ timezone }}"
+    volumes:
+      - "{{ app_dir }}/overseerr/config:/config"
+    ports:
+      - 5055:5055
+    labels:
+    - wud.tag.include=^\d+\.\d+\.\d+$$
+{% endif %}
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    command:
+      - --http-enabled
+    expose:
+      - "9000"
+    volumes:
+      - "{{ app_dir }}/portainer/config:/data"
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    labels:
+      - wud.watch=false
+
+  caddy:
+    build: "../../{{ app_dir }}/caddy"
+    container_name: caddy
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - "{{ app_dir }}/caddy/config:/config"
+      - "{{ app_dir }}/caddy/data:/data"
+      - "{{ app_dir }}/caddy/Caddyfile:/etc/caddy/Caddyfile"
+      - "{{ app_dir }}/caddy/auth:/auth"
+      - "{{ caddy_access_log_path }}:{{ caddy_access_log_path }}"
+    environment:
+      - "DOMAIN={{ domain_name }}"
+      - "CADDY_LOG_PATH={{ caddy_access_log_path }}"
+      - CADDY_AUTH_USERS_PATH=/auth/users.json
+    restart: unless-stopped
+    labels:
+      - wud.watch=false
+
+  whatsupdocker:
+    image: fmartinou/whats-up-docker
+    container_name: wud
+    expose:
+      - "3000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - "{{ app_dir }}/wud/store:/store"
+      - /etc/docker/docker-compose.yml:/wud/docker-compose.yml
+    environment:
+      - "TZ={{ timezone }}"
+      - WUD_TRIGGER_DOCKERCOMPOSE_SAFEUPDATE_THRESHOLD=minor
+      - WUD_TRIGGER_DOCKERCOMPOSE_SAFEUPDATE_FILE=/wud/docker-compose.yml
+      - "WUD_TRIGGER_DOCKERCOMPOSE_SAFEUPDATE_PRUNE={{ wud_prune_old_image }}"
+      - WUD_WATCHER_SAFEUPDATE_WATCHBYDEFAULT=true 
+      - "WUD_WATCHER_SAFEUPDATE_CRON={{ wud_update_cron }}"
+    restart: unless-stopped

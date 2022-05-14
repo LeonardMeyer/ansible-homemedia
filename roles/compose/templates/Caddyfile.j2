@@ -1,0 +1,129 @@
+#jinja2: lstrip_blocks: "true", trim_blocks: "false"
+{
+  order authenticate before reverse_proxy
+  order authorize before reverse_proxy
+
+  log
+
+  security {
+
+    local identity store localdb {
+      realm local
+      path {$CADDY_AUTH_USERS_PATH}
+    }
+
+    authentication portal myportal {
+      enable identity store localdb
+      cookie domain {$DOMAIN}
+      cookie lifetime 86400
+      crypto default token lifetime 43200
+      ui {
+        links {
+          "Sonarr"    https://sonarr.{$DOMAIN} icon "las la-tv"
+          "Radarr"    https://radarr.{$DOMAIN} icon "las la-film"
+          "Bazarr"    https://bazarr.{$DOMAIN} icon "las la-closed-captioning"
+          "Deluge"    https://deluge.{$DOMAIN} icon "las la-water"
+          "Prowlarr"  https://prowlarr.{$DOMAIN} icon "las la-file-download"
+          "WUD"       https://wud.{$DOMAIN} icon "las la-toolbox"
+          {% if enable_duplicati == true %}
+          "Duplicati" https://duplicati.{$DOMAIN} icon "las la-copy"
+          {% endif %}
+          "Portainer" https://portainer.{$DOMAIN} icon "lab la-docker"
+          {% if enable_overseerr == true %}
+          "Overseerr" https://overseerr.{$DOMAIN} icon "las la-edit"
+          {% endif %}
+          "Portal Settings" /settings icon "las la-cog"
+        }
+      }
+    }
+
+    authorization policy admin_policy {
+        set auth url https://{$DOMAIN}
+        allow roles authp/admin
+        acl rule {
+          comment allow admins
+          match role authp/admin
+          allow stop log info
+        }
+        acl rule {
+          comment default deny
+          match any
+          deny log warn
+        }
+    }
+  }
+}
+
+(access_log) {
+    log {
+      output file "{$CADDY_LOG_PATH}/{args.0}.log" {
+        roll_keep 5
+        roll_keep_for 720h
+      }
+    }
+}
+
+(protected_route) {
+  {args.0}.{$DOMAIN} {
+      import access_log {args.0}
+      authorize with admin_policy
+      reverse_proxy {args.1}
+  }
+}
+
+
+(cors) {
+	@origin{args.0} header Origin {args.0}
+	header @origin{args.0} {
+		Vary Origin
+		Access-Control-Allow-Origin "{args.0}"
+		Access-Control-Allow-Headers "*"
+		Access-Control-Allow-Methods "*"
+		Access-Control-Allow-Credentials "true"
+	}
+}
+
+{$DOMAIN} { 
+  import access_log portal
+
+  import cors https://sonarr.{$DOMAIN}
+  import cors https://radarr.{$DOMAIN}
+  import cors https://bazarr.{$DOMAIN}
+  import cors https://deluge.{$DOMAIN}
+  import cors https://prowlarr.{$DOMAIN}
+  import cors https://wud.{$DOMAIN}
+  import cors https://portainer.{$DOMAIN}
+  {% if enable_duplicati == true %}
+  import cors https://duplicati.{$DOMAIN}
+  {% endif %}
+  {% if enable_overseerr == true %}
+  import cors https://overseerr.{$DOMAIN}
+  {% endif %}
+  
+  @options method OPTIONS
+  handle @options {
+    respond 204
+  }
+  handle {
+    authenticate * with myportal
+  }
+}
+
+{% if enable_overseerr == true %}
+overseerr.{$DOMAIN} {
+  import access_log overseerr
+  reverse_proxy overseerr:5055
+}
+{% endif %}
+
+{% if enable_duplicati == true %}
+import protected_route duplicati duplicati:8200
+{% endif %}
+import protected_route sonarr sonarr:8989
+import protected_route radarr radarr:7878
+import protected_route bazarr bazarr:6767
+import protected_route deluge deluge:8112
+import protected_route prowlarr prowlarr:9696
+import protected_route wud wud:3000
+import protected_route portainer portainer:9000
+

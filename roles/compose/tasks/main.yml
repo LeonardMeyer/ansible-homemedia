@@ -1,0 +1,45 @@
+---
+
+- name: Get owner uid and gid
+  getent:
+    database: passwd
+    key: "{{ owner }}"
+
+- name: Setting uid and gid as facts
+  set_fact:
+    uid: "{{ getent_passwd[owner][1] }}"
+    gid: "{{ getent_passwd[owner][2] }}"
+
+- name: Copy docker-compose file
+  template:
+    owner: "{{ owner }}"
+    group: docker
+    mode: '0770' 
+    src: templates/docker-compose.yml.j2
+    dest: /etc/docker/docker-compose.yml
+
+- name: Copy Caddyfile
+  template:
+    owner: "{{ owner }}"
+    group: docker
+    mode: '0770' 
+    src: templates/Caddyfile.j2
+    dest: "{{ app_dir }}/caddy/Caddyfile"
+
+- name: Copy Caddy Dockerfile
+  template:
+    owner: "{{ owner }}"
+    group: docker
+    mode: '0770' 
+    src: templates/Dockerfile
+    dest: "{{ app_dir }}/caddy/Dockerfile"
+
+- name: "Pull docker images"
+  command:
+    chdir: /etc/docker/
+    cmd: docker compose pull
+
+- name: "Start docker containers"
+  command:
+    chdir: /etc/docker/
+    cmd: docker compose up -d

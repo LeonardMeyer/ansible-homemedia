@@ -1,0 +1,9 @@
+---
+- name: Setup homemedia server
+  hosts: server
+  remote_user: "{{ owner }}"
+  roles:
+    - docker
+    - filesystem
+    - firewall
+    - compose

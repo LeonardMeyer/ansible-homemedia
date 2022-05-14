@@ -1,0 +1,56 @@
+---
+- name: Install ufw
+  apt: package=ufw state=present
+
+- name: Disable ufw
+  ufw: state=disabled
+
+- name: Deny all incoming traffic
+  ufw:
+    policy: deny
+    direction: incoming
+  notify: Restart ufw
+
+- name: Allow all outgoing traffic
+  ufw:
+    policy: allow
+    direction: outgoing
+  notify: Restart ufw
+
+- name: Allow SSH traffic  
+  ufw: 
+    rule: limit
+    port: '22'
+    proto: tcp
+  notify: Restart ufw
+
+- name: Allow deluged traffic # Secured by deluge protocol
+  ufw:
+    rule: allow
+    port: '58846'
+    proto: tcp
+  notify: Restart ufw
+
+- name: Allow Plex Media Server traffic # Secured by PLEX
+  ufw: 
+    rule: allow
+    port: '32400'
+    proto: tcp
+  notify: Restart ufw
+
+- name: Allow HTTP traffic
+  ufw:
+    rule: allow
+    port: '80'
+    proto: tcp
+  notify: Restart ufw
+
+- name: Allow SSL/TLS traffic
+  ufw: 
+    rule: allow
+    port: '443'
+    proto: tcp
+  notify: Restart ufw
+
+- name: Enable ufw
+  ufw: state=enabled

@@ -1,0 +1,78 @@
+---
+
+- name: Ensure {{ owner }} exists
+  user:
+    name: "{{ owner }}"
+    createhome: yes
+  
+- name: Copy secure SSH config
+  template:
+    src: templates/sshd_config.j2
+    dest: /etc/ssh/sshd_config
+  notify: Restart SSH daemon
+
+- name: Ensure media and torrent folders exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ owner }}"
+  loop:
+    - "{{ media_dir }}/movies"
+    - "{{ media_dir }}/tv"
+    - "{{ media_dir }}/anime"
+    - "{{ torrents_dir }}/movies"
+    - "{{ torrents_dir }}/tv"
+    - "{{ torrents_dir }}/anime"
+    - "{{ torrents_dir }}/blackhole"
+
+- name: Ensure app folders exist
+  file:
+    path: "{{ app_dir }}/{{ item.app }}/{{ item.dir }}"
+    state: directory
+    owner: "{{ owner }}"
+  loop:
+    - { app: 'plex', dir: 'config' }
+    - { app: 'bazarr', dir: 'config' }
+    - { app: 'sonarr', dir: 'config' }
+    - { app: 'radarr', dir: 'config' }
+    - { app: 'prowlarr', dir: 'config' }
+    - { app: 'deluge', dir: 'config' }
+    - { app: 'portainer', dir: 'config' }
+    - { app: 'caddy', dir: 'config' }
+    - { app: 'caddy', dir: 'data' }
+    - { app: 'caddy', dir: 'auth' }
+    - { app: 'wud', dir: 'store' }
+
+- name: Ensure Overseerr folder exist
+  file:
+    path: "{{ app_dir }}/overseerr/config"
+    state: directory
+    owner: "{{ owner }}"
+  when: enable_overseerr|bool
+
+- name: Ensure Duplicati folders exist
+  file:
+    path: "{{ app_dir }}/{{ item.app }}/{{ item.dir }}"
+    state: directory
+    owner: "{{ owner }}"
+  loop:
+    - { app: 'duplicati', dir: 'config' }
+    - { app: 'duplicati', dir: 'source' }
+    - { app: 'duplicati', dir: 'backups' }
+  when: enable_duplicati|bool
+
+- name: Ensure Caddy access log folder exists
+  file:
+    path: "{{ caddy_access_log_path }}"
+    state: directory
+    owner: "{{ owner }}"
+
+- name: Set up permissions
+  file:
+    path: "{{ root_dir }}"
+    recurse: yes
+    state: directory
+    owner: "{{ owner }}"
+    group: "{{ owner }}"
+    mode: '0774'
+

@@ -1,0 +1,24 @@
+---
+
+# Default user in most Docker containers and owner of root_dir. Most likely the same as ssh user
+owner: <username>
+domain_name: <domain>
+timezone: Europe/Paris
+
+enable_flaresolverr: false
+enable_overseerr: false
+enable_duplicati: false
+
+# You should leave these settings alone unless you know what you're doing
+
+root_dir: /homemedia
+torrents_dir: "{{ root_dir }}/torrents"
+media_dir: "{{ root_dir }}/medias"
+app_dir: "{{ root_dir }}/apps"
+
+wud_update_cron: "0 4 * * *"
+wud_prune_old_image: true
+
+caddy_access_log_path: "/var/log/caddy"
+
+
