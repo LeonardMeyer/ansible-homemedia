@@ -3,17 +3,24 @@
 
 Ansible playbook to install a private media server. Goal was to provide a reasonably light, maintainable, automated and easy to setup solution with sensible defaults. It assumes every application is served through dedicated subdomains so have your DNS properly setup.
 
-It features:
+### Features
 
-* HTTPS Reverse proxy, authentification, authorization and apps portal through [Caddy](https://caddyserver.com/) with preconfigured secured routes
+* HTTPS Reverse proxy, authentification, authorization and apps portal through [Caddy](https://caddyserver.com/) with preconfigured secured routes. 
 * Automatic updates of non major versions for SemVer containers with [What's up Docker](https://fmartinou.github.io/whats-up-docker/#/). By default, it cleans up old images and updates everyday at 4 A.M.
 * Automatic firewall configuration and secure SSH daemon setup
 * Monitoring of Docker using [Portainer](https://www.portainer.io)
 * Full use of the *Arr stack and [Deluge](https://deluge-torrent.org) to manage the downloads and subtitles.
-* [Flaresolverr](https://github.com/FlareSolverr/FlareSolverr) and [Overseerr](https://overseerr.dev/) available as opt-ins (see `group_vars`)
 * Proper setup of the filesystem and permissions to enable hardlinks and atomic moves
-* Allows for encrypted and remote backups of persistent container data with [Duplicati](https://www.duplicati.com/). Opt-in as well.
 * Streaming and organization of your medias using [Plex](https://www.plex.tv)
+
+### Optionals
+
+These are not enabled by default, but you can change that by editing the ansible `group_vars/all` file prior to starting the playbook.
+
+* Multi-factor authentication (MFA) upon auth portal login using [Caddy security plugin](https://authp.github.io/docs/authenticate/mfa). On first auth portal launch it'll ask you to setup MFA.
+* [Flaresolverr](https://github.com/FlareSolverr/FlareSolverr) to avoid Cloudflare's challenges on specific trackers. Prowlarr can natively integrate with it.
+* [Overseerr](https://overseerr.dev/) to manage media requests. Despite being behind Caddy for HTTPS, it does not require Caddy authentication. Instead it is linked to Plex server instance which will manage external users for you.
+* Allows for encrypted and remote backups of persistent container data with [Duplicati](https://www.duplicati.com/)
 
 ## ⛩️ Architecture
 
@@ -24,7 +31,7 @@ It features:
 ## ⚙️ Usage 
 
 1) Replace the placeholders in the hosts inventory file to use your server and SSH user
-2) Replace the placeholders in the group_vars to match your setup
+2) Replace the placeholders in the `group_vars/all` to match your setup
 3) Run the playbook `ansible-playbook -i hosts homemedia-setup.yml -K`
 4) SSH to your server and run `docker logs caddy` to grab default login and password ([see bottom page](https://authp.github.io/docs/authenticate/local/local)) for the Caddy portal. Go to your domain to login, change password and go to `portainer.{domain.com}` to make sure everything is up and running.
 5) Start a SSH tunnel `ssh -g -L 32400:localhost:32400 -N {domain.com}`, claim your PLEX server at `localhost:32400/web`, map the `/homemedia/medias` folders as you want and enable remote access with port 32400. You should then be able to reach your PLEX server from any external PLEX client.
