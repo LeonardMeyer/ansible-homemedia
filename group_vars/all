@@ -9,6 +9,8 @@ enable_flaresolverr: false
 enable_overseerr: false
 enable_duplicati: false
 
+enable_mfa: false
+
 # You should leave these settings alone unless you know what you're doing
 
 root_dir: /homemedia

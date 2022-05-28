@@ -35,6 +35,12 @@
           "Portal Settings" /settings icon "las la-cog"
         }
       }
+      {% if enable_mfa == true %}
+      transform user {
+        match realm local
+        require mfa
+      }
+      {% endif %}
     }
 
     authorization policy admin_policy {
