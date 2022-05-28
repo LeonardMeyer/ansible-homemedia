@@ -1,6 +1,6 @@
 ---
 - name: Setup homemedia server
-  hosts: server
+  hosts: all
   remote_user: "{{ owner }}"
   roles:
     - docker

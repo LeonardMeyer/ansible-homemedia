@@ -56,8 +56,12 @@ I know this is Ansible and all but the point wasn't to be idempotent. It was to 
 
 ### I already have an existing enviromnent, can I use this ?
 
-Possible but not advised because this playbook was made for running on a fresh Ubuntu install. You need to watch Ansible and Docker versions as well as having a user who can write in `/` (or change `root_dir`). The playbook do use newish syntax, so Ansible >= 2.5 for the controller should suffice. For docker and compose, it is automatically installed by the playbook. However if you already have it then disable the `docker` role. Know the playbook assumes at least Compose V2, so if you're running older versions you should add back the hyphens in the `compose` role tasks. In addition be wary of the firewall aed filesystem role, you may have to tweak a few things. YMMV because I haven't tested any of this.
+Possible but not advised because this playbook was made for running on a fresh Ubuntu install. You need to watch Ansible and Docker versions as well as having a user who can write in `/` (or change `root_dir`). The playbook do use newish syntax, so Ansible >= 2.5 for the controller should suffice. For docker and compose, it is automatically installed by the playbook. However if you already have it then disable the `docker` role. Know the playbook assumes at least Compose V2, so if you're running older versions you should add back the hyphens in the `compose` role tasks. In addition be wary of the firewall and filesystem role, you may have to tweak a few things. YMMV because I haven't tested any of this, but you could using the `Vagrantfile`.
 
 ### Can I get a wildcard certificate ?
 
 Not out of the box because that would force me to take into account everyone's DNS provider. Good news is that you can do it yourself [fairly easily](https://caddyserver.com/docs/caddyfile/patterns#wildcard-certificates) modifying Caddy's Dockerfile and Caddyfile.
+
+## 📝 Testing
+
+There's a `Vagrantfile` available if you'd like to contribute something or just mess around in a headless system. Just make sure you have [Vagrant](https://www.vagrantup.com/) installed as well as a provider (VirtualBox recommended). Then clone the repository and run `vagrant up` in the root directory. This will run the playbook without any of the opt-ins against a local VM in which you can `vagrant ssh` to snoop around after if you want.
