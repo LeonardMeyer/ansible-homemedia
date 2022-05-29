@@ -28,6 +28,9 @@
           {% if enable_duplicati == true %}
           "Duplicati" https://duplicati.{$DOMAIN} icon "las la-copy"
           {% endif %}
+          {% if enable_duplicacy == true %}
+          "Duplicacy" https://duplicacy.{$DOMAIN} icon "las la-copy"
+          {% endif %}
           "Portainer" https://portainer.{$DOMAIN} icon "lab la-docker"
           {% if enable_overseerr == true %}
           "Overseerr" https://overseerr.{$DOMAIN} icon "las la-edit"
@@ -102,6 +105,9 @@
   {% if enable_duplicati == true %}
   import cors https://duplicati.{$DOMAIN}
   {% endif %}
+  {% if enable_duplicacy == true %}
+  import cors https://duplicacy.{$DOMAIN}
+  {% endif %}
   {% if enable_overseerr == true %}
   import cors https://overseerr.{$DOMAIN}
   {% endif %}
@@ -122,6 +128,9 @@ overseerr.{$DOMAIN} {
 }
 {% endif %}
 
+{% if enable_duplicacy == true %}
+import protected_route duplicacy duplicacy:3875
+{% endif %}
 {% if enable_duplicati == true %}
 import protected_route duplicati duplicati:8200
 {% endif %}

@@ -102,6 +102,25 @@ services:
     labels:
       - wud.tag.include=^\d+\.\d+\.\d+$$
       
+{% if enable_duplicacy == true %}
+  duplicacy:
+    image: saspus/duplicacy-web:latest
+    container_name: duplicacy
+    expose:
+      - "3875"
+    environment:
+      - "USR_ID={{ uid }}"
+      - "GRP_ID={{ gid }}"
+      - "TZ={{ timezone }}"
+    volumes:
+      - "{{ app_dir }}/duplicacy/config:/config"
+      - "{{ app_dir }}/duplicacy/logs:/logs"
+      - "{{ root_dir }}:/root_dir"
+    restart: unless-stopped
+    labels:
+      - wud.tag.include=^\d+\.\d+\.\d+$$
+{% endif %}
+
 {% if enable_duplicati == true %}
   duplicati:
     image: lscr.io/linuxserver/duplicati:latest
