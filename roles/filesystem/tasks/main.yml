@@ -61,6 +61,16 @@
     - { app: 'duplicati', dir: 'backups' }
   when: enable_duplicati|bool
 
+- name: Ensure Duplicacy folders exist
+  file:
+    path: "{{ app_dir }}/{{ item.app }}/{{ item.dir }}"
+    state: directory
+    owner: "{{ owner }}"
+  loop:
+    - { app: 'duplicacy', dir: 'config' }
+    - { app: 'duplicacy', dir: 'logs' }
+  when: enable_duplicacy|bool
+
 - name: Ensure Caddy access log folder exists
   file:
     path: "{{ caddy_access_log_path }}"

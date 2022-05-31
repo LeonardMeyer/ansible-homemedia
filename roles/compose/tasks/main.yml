@@ -10,10 +10,14 @@
     uid: "{{ getent_passwd[owner][1] }}"
     gid: "{{ getent_passwd[owner][2] }}"
 
+- name: Display UID and GID
+  debug:
+    msg: Retrieved user with UID {{ uid }} and GID {{ gid }}
+
 - name: Copy docker-compose file
   template:
     owner: "{{ owner }}"
-    group: docker
+    group: "{{ owner }}"
     mode: '0770' 
     src: templates/docker-compose.yml.j2
     dest: /etc/docker/docker-compose.yml
@@ -21,7 +25,7 @@
 - name: Copy Caddyfile
   template:
     owner: "{{ owner }}"
-    group: docker
+    group: "{{ owner }}"
     mode: '0770' 
     src: templates/Caddyfile.j2
     dest: "{{ app_dir }}/caddy/Caddyfile"
@@ -29,7 +33,7 @@
 - name: Copy Caddy Dockerfile
   template:
     owner: "{{ owner }}"
-    group: docker
+    group: "{{ owner }}"
     mode: '0770' 
     src: templates/Dockerfile
     dest: "{{ app_dir }}/caddy/Dockerfile"
