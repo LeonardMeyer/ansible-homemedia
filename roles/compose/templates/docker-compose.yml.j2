@@ -16,6 +16,7 @@ services:
     volumes:
      - "{{ app_dir }}/deluge/config:/config"
      - "{{ torrents_dir }}:{{ torrents_dir }}"
+    restart: unless-stopped
     labels:
       - wud.tag.include=^\d+\.\d+\.\d+$$
 
