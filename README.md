@@ -49,7 +49,7 @@ Because I don't need it, but one could probably add it easily. Just add and conf
 
 Most of the docker images used in the project are saving their important files in one or several specific folders. By default this is all mapped on the host in the directory tree `app_dir` for every application. You should configure Duplicati/Duplicacy to backup this directory to another remote location, as well as others if you so wish. Doing so if your machine crashes and burn, you can just run the playbook again and restore your remote backup.
 
-One thing to keep in mind is that, unless you decide to run  as `root` the container doing the backup, it won't restore `root` owned files and directories so make sure you exclude them from your backup strategy. That includes `{{ app_dir }}/caddy` path, as its container has to run as `root`.
+One thing to keep in mind is that, unless you decide to run  as `root` the container doing the backup, it won't restore `root` owned files and directories so make sure you exclude them from your backup strategy. That includes `{{ app_dir }}/caddy` and  `{{ app_dir }}/wud` paths, as their containers has to run as `root`.
 
 ### Can other people access my applications ?
 

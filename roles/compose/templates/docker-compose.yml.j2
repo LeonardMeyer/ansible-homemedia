@@ -208,7 +208,6 @@ services:
   whatsupdocker:
     image: fmartinou/whats-up-docker
     container_name: wud
-    user: "{{ uid }}:{{ gid }}"
     expose:
       - "3000"
     volumes:
