@@ -85,24 +85,23 @@ services:
     labels:
       - wud.tag.include=^\d+\.\d+\.\d+$$
 
-  plex_server:
-    image: lscr.io/linuxserver/plex:latest
-    container_name: plex
-    ports:
-      - 32400:32400
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    expose:
+      - "8096"
     environment:
       - "PUID={{ uid }}"
       - "PGID={{ gid }}"
-      - VERSION=docker
       - "TZ={{ timezone }}"
-      - DOCKER_MODS=linuxserver/mods:plex-absolute-hama
     volumes:
-      - "{{ app_dir }}/plex/config:/config"
-      - "{{ media_dir }}:{{ media_dir }}"
+      - "{{ app_dir }}/jellyfin/config:/config"
+      - "{{ app_dir }}/jellyfin/cache:/cache"
+      - "{{ media_dir }}:{{ media_dir }}:ro"
     restart: unless-stopped
     labels:
       - wud.tag.include=^\d+\.\d+\.\d+$$
-      
+
 {% if enable_duplicacy == true %}
   duplicacy:
     image: saspus/duplicacy-web:latest
@@ -155,21 +154,6 @@ services:
     - wud.tag.include=^\d+\.\d+\.\d+$$
 {% endif %}
 
-{% if enable_overseerr == true %}
-  overseerr:
-    image: lscr.io/linuxserver/overseerr:latest
-    container_name: overseerr
-    environment:
-    - "PUID={{ uid }}"
-    - "PGID={{ gid }}"
-    - "TZ={{ timezone }}"
-    volumes:
-      - "{{ app_dir }}/overseerr/config:/config"
-    ports:
-      - 5055:5055
-    labels:
-    - wud.tag.include=^\d+\.\d+\.\d+$$
-{% endif %}
 
   portainer:
     image: portainer/portainer-ce:latest

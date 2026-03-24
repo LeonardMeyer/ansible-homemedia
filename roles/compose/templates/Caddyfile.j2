@@ -32,9 +32,6 @@
           "Duplicacy" https://duplicacy.{$DOMAIN} icon "las la-copy"
           {% endif %}
           "Portainer" https://portainer.{$DOMAIN} icon "lab la-docker"
-          {% if enable_overseerr == true %}
-          "Overseerr" https://overseerr.{$DOMAIN} icon "las la-edit"
-          {% endif %}
           "Portal Settings" /settings icon "las la-cog"
         }
       }
@@ -108,9 +105,6 @@
   {% if enable_duplicacy == true %}
   import cors https://duplicacy.{$DOMAIN}
   {% endif %}
-  {% if enable_overseerr == true %}
-  import cors https://overseerr.{$DOMAIN}
-  {% endif %}
   
   @options method OPTIONS
   handle @options {
@@ -120,13 +114,6 @@
     authenticate * with myportal
   }
 }
-
-{% if enable_overseerr == true %}
-overseerr.{$DOMAIN} {
-  import access_log overseerr
-  reverse_proxy overseerr:5055
-}
-{% endif %}
 
 {% if enable_duplicacy == true %}
 import protected_route duplicacy duplicacy:3875
@@ -141,4 +128,10 @@ import protected_route deluge deluge:8112
 import protected_route prowlarr prowlarr:9696
 import protected_route wud wud:3000
 import protected_route portainer portainer:9000
+
+jellyfin.{$DOMAIN} {
+    import access_log jellyfin
+    reverse_proxy jellyfin:8096
+}
+
 

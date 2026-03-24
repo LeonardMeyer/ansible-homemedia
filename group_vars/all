@@ -6,7 +6,6 @@ domain_name: <domain>
 timezone: Europe/Paris
 
 enable_flaresolverr: false
-enable_overseerr: false
 enable_duplicacy: false
 enable_duplicati: false
 

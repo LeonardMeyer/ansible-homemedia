@@ -31,7 +31,6 @@
     state: directory
     owner: "{{ owner }}"
   loop:
-    - { app: 'plex', dir: 'config' }
     - { app: 'bazarr', dir: 'config' }
     - { app: 'sonarr', dir: 'config' }
     - { app: 'radarr', dir: 'config' }
@@ -42,13 +41,8 @@
     - { app: 'caddy', dir: 'data' }
     - { app: 'caddy', dir: 'auth' }
     - { app: 'wud', dir: 'store' }
-
-- name: Ensure Overseerr folder exist
-  file:
-    path: "{{ app_dir }}/overseerr/config"
-    state: directory
-    owner: "{{ owner }}"
-  when: enable_overseerr|bool
+    - { app: 'jellyfin', dir: 'config' }
+    - { app: 'jellyfin', dir: 'cache' }
 
 - name: Ensure Duplicati folders exist
   file:

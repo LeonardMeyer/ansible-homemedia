@@ -31,13 +31,6 @@
     proto: tcp
   notify: Restart ufw
 
-- name: Allow Plex Media Server traffic # Secured by PLEX
-  ufw: 
-    rule: allow
-    port: '32400'
-    proto: tcp
-  notify: Restart ufw
-
 - name: Allow HTTP traffic
   ufw:
     rule: allow
