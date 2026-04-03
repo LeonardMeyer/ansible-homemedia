@@ -1,0 +1,5 @@
+// Enable automatic security updates for CrowdSec packages
+// Major version upgrades are prevented by apt pinning in /etc/apt/preferences.d/crowdsec
+Unattended-Upgrade::Origins-Pattern {
+    "o=packagecloud.io/crowdsec/crowdsec,a=${distro_codename}";
+};

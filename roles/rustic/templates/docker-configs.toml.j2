@@ -1,0 +1,34 @@
+[global]
+no-progress = true
+
+[repository]
+repository = "opendal:b2"
+password-file = "/etc/rustic/password.txt"
+
+[repository.options]
+key_id             = "{{ rustic_b2_application_key_id }}"
+application_key    = "{{ rustic_b2_application_key }}"
+bucket             = "{{ rustic_b2_bucket }}"
+bucket_id          = "{{ rustic_b2_bucket_id }}"
+root               = "/"
+
+[backup]
+host = "homemedia"
+init = true
+skip-if-unchanged = true
+
+[forget]
+keep-daily  = 7
+keep-weekly = 2
+prune = true
+
+[[backup.snapshots]]
+name = "arr-stack"
+sources = [
+  "{{ app_dir }}/sonarr/config",
+  "{{ app_dir }}/radarr/config",
+  "{{ app_dir }}/prowlarr/config",
+  "{{ app_dir }}/bazarr/config",
+  "{{ app_dir }}/profilarr/config",
+]
+tags = ["docker", "arr"]

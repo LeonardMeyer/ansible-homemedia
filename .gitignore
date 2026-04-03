@@ -3,3 +3,6 @@
 *.idea
 .vagrant
 *.log
+
+# Ansible Vault — unencrypted secrets file (encrypt before committing)
+group_vars/all/vault.yml

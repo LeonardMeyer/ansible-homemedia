@@ -1,0 +1,10 @@
+---
+
+- name: Flush handlers to reload systemd before enabling timer
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable and start rustic backup timer
+  ansible.builtin.systemd:
+    name: rustic-backup.timer
+    state: started
+    enabled: true

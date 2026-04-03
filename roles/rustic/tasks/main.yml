@@ -1,0 +1,66 @@
+---
+
+- name: Install busybox-static (provides shell for scratch container)
+  ansible.builtin.apt:
+    name: busybox-static
+    state: present
+
+- name: Create /etc/rustic directory
+  ansible.builtin.file:
+    path: /etc/rustic
+    state: directory
+    owner: "{{ owner }}"
+    group: "{{ owner }}"
+    mode: "0750"
+
+- name: Deploy rustic repository password file
+  ansible.builtin.copy:
+    content: "{{ rustic_repo_password }}"
+    dest: /etc/rustic/password.txt
+    owner: "{{ owner }}"
+    group: "{{ owner }}"
+    mode: "0640"
+  no_log: true
+
+- name: Deploy rustic configuration
+  ansible.builtin.template:
+    src: docker-configs.toml.j2
+    dest: /etc/rustic/docker-configs.toml
+    owner: "{{ owner }}"
+    group: "{{ owner }}"
+    mode: "0640"
+  no_log: true
+
+- name: Create rustic scripts directory
+  ansible.builtin.file:
+    path: "{{ app_dir }}/rustic/scripts"
+    state: directory
+    owner: "{{ owner }}"
+    group: "{{ owner }}"
+    mode: "0750"
+
+- name: Deploy backup script
+  ansible.builtin.template:
+    src: backup.sh.j2
+    dest: "{{ app_dir }}/rustic/scripts/backup.sh"
+    owner: "{{ owner }}"
+    group: "{{ owner }}"
+    mode: "0755"
+
+- name: Deploy rustic backup systemd service
+  ansible.builtin.template:
+    src: rustic-backup.service.j2
+    dest: /etc/systemd/system/rustic-backup.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Deploy rustic backup systemd timer
+  ansible.builtin.template:
+    src: rustic-backup.timer.j2
+    dest: /etc/systemd/system/rustic-backup.timer
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd

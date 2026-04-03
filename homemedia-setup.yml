@@ -6,4 +6,12 @@
     - docker
     - filesystem
     - firewall
+    # - geoblocking
+    - crowdsec
+    - rustic
     - compose
+  tasks:
+    - name: Enable rustic backup schedule
+      ansible.builtin.include_role:
+        name: rustic
+        tasks_from: schedule

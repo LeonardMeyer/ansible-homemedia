@@ -1,0 +1,66 @@
+#!/bin/sh
+
+# Temporarily disable geoblocking to allow Let's Encrypt certificate renewal
+set -eu
+
+DOMAIN="{{ domain_name }}"
+RENEWAL_THRESHOLD=2592000  # 30 days in seconds
+
+log() { echo "$(date '+%Y-%m-%d %H:%M:%S') [geoip-renew-certs] $1"; }
+
+# Ensure geoblocking is always re-enabled, even on failure or interruption
+GEOBLOCKING_DISABLED=false
+cleanup() {
+    if [ "$GEOBLOCKING_DISABLED" = true ]; then
+        log "Re-enabling geoblocking..."
+        if /usr/bin/geoip-shell on; then
+            log "Geoblocking re-enabled successfully."
+        else
+            log "ERROR: Failed to re-enable geoblocking!"
+        fi
+    fi
+}
+trap cleanup EXIT INT TERM
+
+# Check if certificate renewal is needed (expires within 30 days)
+if echo | openssl s_client -servername "$DOMAIN" -connect 127.0.0.1:443 2>/dev/null \
+   | openssl x509 -noout -checkend "$RENEWAL_THRESHOLD" 2>/dev/null; then
+    log "Certificate valid for more than 30 days. No renewal needed."
+    exit 0
+fi
+
+log "Certificate expires within 30 days (or could not be checked). Proceeding with renewal."
+
+# Disable geoblocking
+log "Disabling geoblocking..."
+if ! /usr/bin/geoip-shell off; then
+    log "ERROR: Failed to disable geoblocking."
+    exit 1
+fi
+GEOBLOCKING_DISABLED=true
+
+# Reload Caddy to trigger ACME certificate renewal
+# Not sure about caddy reload...? 
+log "Reloading Caddy to trigger certificate renewal..."
+if ! docker exec caddy caddy reload --config {{ caddy_container_caddyfile }} --force 2>&1; then
+    log "WARNING: Caddy reload failed, falling back to container restart..."
+    if ! docker restart caddy 2>&1; then
+        log "ERROR: Failed to restart Caddy container."
+        exit 1
+    fi
+fi
+
+# Wait for ACME challenge to complete
+log "Waiting 60s for ACME challenge completion..."
+sleep 60
+
+# Verify the certificate was renewed
+if echo | openssl s_client -servername "$DOMAIN" -connect 127.0.0.1:443 2>/dev/null \
+   | openssl x509 -noout -checkend "$RENEWAL_THRESHOLD" 2>/dev/null; then
+    log "SUCCESS: Certificate renewed successfully."
+else
+    log "WARNING: Certificate may not have been renewed. Check Caddy logs."
+fi
+
+# Cleanup (re-enable geoblocking) is handled by the EXIT trap
+log "Done."

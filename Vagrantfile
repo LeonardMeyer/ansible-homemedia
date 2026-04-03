@@ -6,7 +6,7 @@ Vagrant.configure("2") do |config|
 
   config.vm.synced_folder ".", "/vagrant"
 
-  config.vm.box = "ubuntu/focal64"
+  config.vm.box = "ubuntu/noble64"
   config.vm.provision "ansible_local" do |ansible|
     ansible.compatibility_mode = "2.0"
     ansible.extra_vars = {

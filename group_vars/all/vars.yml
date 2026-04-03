@@ -1,0 +1,63 @@
+---
+
+# Default user in most Docker containers and owner of root_dir. Most likely the same as ssh user
+owner: "{{ vault_owner }}"
+domain_name: "{{ vault_domain_name }}"
+timezone: Europe/Paris
+
+enable_flaresolverr: false
+enable_mfa: false
+
+# You should leave these settings alone unless you know what you're doing
+root_dir: /homemedia
+torrents_dir: "{{ root_dir }}/torrents"
+media_dir: "{{ root_dir }}/medias"
+app_dir: "{{ root_dir }}/apps"
+
+wud_update_cron: "0 4 * * *"
+wud_prune_old_image: true
+
+caddy_access_log_path: "/var/log/caddy"
+caddy_container_caddyfile: "/etc/caddy/Caddyfile"
+
+# Geoblocking (geoip-shell) — kernel-level geo-filtering via ipset + iptables
+geoip_renew_log_path: "/var/log/geoip-renew-certs.log"
+geoip_countries: "FR NL"         # Whitelisted countries (space-separated ISO codes)
+geoip_mode: whitelist            # whitelist or blacklist
+geoip_source: ripe               # ripe, ipdeny, maxmind or ipinfo
+geoip_user_country: "FR"         # Your country code (lockout prevention warning)
+geoip_interfaces: "auto"         # auto, all, or specific interface name
+geoip_trusted_ips: ""            # Trusted IPs bypassing geoblocking (space-separated)
+
+# CrowdSec — leave empty to skip Console enrollment
+crowdsec_enrollment_key: "{{ vault_crowdsec_enrollment_key }}"
+
+# WUD (What's Up Docker) — credentials to access the LinuxServer.io registry (lscr.io)
+# These are sensitive and must be defined in group_vars/all/vault.yml (see vault.yml.example)
+wud_lscr_token: "{{ vault_wud_lscr_token }}"
+wud_lscr_user: "{{ vault_wud_lscr_user }}"
+
+# Jellyfin startup wizard
+jellyfin_url: "https://jellyfin.{{ domain_name }}"
+jellyfin_admin_name: "admin94032"
+jellyfin_admin_pass: "{{ vault_jellyfin_admin_pass }}"   # from vault — no default
+jellyfin_server_name: "Jellyfin"
+jellyfin_ui_culture: "fr"
+jellyfin_metadata_country: "FR"
+jellyfin_metadata_lang: "fr"
+jellyfin_enable_remote_access: true
+
+# Rustic backup — encrypted backups to Backblaze B2
+rustic_backup_schedule: "*-*-* 03:00:00"
+rustic_repo_password: "{{ vault_rustic_repo_password }}"
+rustic_b2_bucket: "docker-b2-config"
+rustic_b2_bucket_id: "{{ vault_rustic_b2_bucket_id }}"
+rustic_b2_application_key_id: "{{ vault_rustic_b2_application_key_id }}"
+rustic_b2_application_key: "{{ vault_rustic_b2_application_key }}"
+rustic_stop_containers:
+  - sonarr
+  - radarr
+  - prowlarr
+  - bazarr
+  - profilarr
+  - profilarr-parser

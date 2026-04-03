@@ -1,0 +1,5 @@
+# Pin CrowdSec to current major version ({{ crowdsec_major_version.stdout }}.*)
+# This prevents automatic major version upgrades while allowing minor/patch updates
+Package: crowdsec
+Pin: version {{ crowdsec_major_version.stdout }}.*
+Pin-Priority: 999

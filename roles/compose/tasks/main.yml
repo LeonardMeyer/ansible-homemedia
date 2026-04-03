@@ -1,49 +1,56 @@
 ---
 
 - name: Get owner uid and gid
-  getent:
+  ansible.builtin.getent:
     database: passwd
     key: "{{ owner }}"
 
 - name: Setting uid and gid as facts
-  set_fact:
-    uid: "{{ getent_passwd[owner][1] }}"
-    gid: "{{ getent_passwd[owner][2] }}"
+  ansible.builtin.set_fact:
+    compose_uid: "{{ getent_passwd[owner][1] }}"
+    compose_gid: "{{ getent_passwd[owner][2] }}"
 
 - name: Display UID and GID
-  debug:
-    msg: Retrieved user with UID {{ uid }} and GID {{ gid }}
+  ansible.builtin.debug:
+    msg: Retrieved user with UID {{ compose_uid }} and GID {{ compose_gid }}
 
 - name: Copy docker-compose file
-  template:
+  ansible.builtin.template:
     owner: "{{ owner }}"
     group: "{{ owner }}"
-    mode: '0770' 
+    mode: '0770'
     src: templates/docker-compose.yml.j2
     dest: /etc/docker/docker-compose.yml
 
 - name: Copy Caddyfile
-  template:
+  ansible.builtin.template:
     owner: "{{ owner }}"
     group: "{{ owner }}"
-    mode: '0770' 
+    mode: '0770'
     src: templates/Caddyfile.j2
     dest: "{{ app_dir }}/caddy/Caddyfile"
 
 - name: Copy Caddy Dockerfile
-  template:
+  ansible.builtin.template:
     owner: "{{ owner }}"
     group: "{{ owner }}"
-    mode: '0770' 
+    mode: '0770'
     src: templates/Dockerfile
     dest: "{{ app_dir }}/caddy/Dockerfile"
+  notify: Rebuild Caddy image
 
-- name: "Pull docker images"
-  command:
-    chdir: /etc/docker/
-    cmd: docker compose pull
+- name: Pull and start docker containers
+  community.docker.docker_compose_v2:
+    project_src: /etc/docker/
+    pull: missing
+    build: policy
+    state: present
+  register: compose_result
 
-- name: "Start docker containers"
-  command:
-    chdir: /etc/docker/
-    cmd: docker compose up -d
+- name: Show compose actions
+  ansible.builtin.debug:
+    var: compose_result.actions
+  when: compose_result.actions # noqa: no-handler
+
+- name: Configure Jellyfin startup wizard
+  ansible.builtin.import_tasks: jellyfin.yml

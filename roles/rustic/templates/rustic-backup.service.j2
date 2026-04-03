@@ -1,0 +1,12 @@
+[Unit]
+Description=Rustic Docker configs backup
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User={{ owner }}
+Group={{ owner }}
+ExecStartPre=/usr/bin/docker stop {{ rustic_stop_containers | join(' ') }}
+ExecStart=/usr/bin/docker compose -f /etc/docker/docker-compose.yml up rustic
+ExecStopPost=/usr/bin/docker restart {{ rustic_stop_containers | join(' ') }}

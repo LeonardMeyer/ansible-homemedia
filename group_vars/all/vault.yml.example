@@ -1,0 +1,25 @@
+---
+# Copy this file to vault.yml, fill in your values, then encrypt it:
+#   cp group_vars/all/vault.yml.example group_vars/all/vault.yml
+#   ansible-vault encrypt group_vars/all/vault.yml
+#
+# To run the playbook afterwards:
+#   ansible-playbook homemedia-setup.yml -K --ask-vault-pass
+#
+# Tip: store your vault password in ~/.ansible_vault_pass and add
+#   vault_password_file = ~/.ansible_vault_pass
+# to ansible.cfg to avoid being prompted every time.
+
+vault_owner: "your_username"
+vault_domain_name: "your.domain.tld"
+
+vault_wud_lscr_token: "ghp_your_github_token_here"
+vault_wud_lscr_user: "your_github_username"
+vault_crowdsec_enrollment_key: ""   # optional — leave empty to skip Console enrollment
+
+vault_jellyfin_admin_pass: "changeme"
+
+vault_rustic_repo_password: "your_rustic_repo_password"
+vault_rustic_b2_bucket_id: "your_b2_bucket_id"
+vault_rustic_b2_application_key_id: "your_b2_key_id"
+vault_rustic_b2_application_key: "your_b2_application_key"
