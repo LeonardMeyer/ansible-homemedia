@@ -6,6 +6,7 @@
 # Verified request order from real network captures:
 #   GET  /System/Info/Public (health check)
 #   POST /Startup/Configuration
+#   GET  /Startup/User          ← triggers InitializeAsync / default user creation
 #   POST /Startup/User
 #   POST /Startup/RemoteAccess
 #   POST /Startup/Complete
@@ -67,8 +68,23 @@
   when: not compose__wizard_done
 
 # -------------------------------------------------------------------------
-# 4. POST /Startup/User
-#    Updates the first user that Jellyfin creates automatically on startup.
+# 4a. GET /Startup/User
+#     The GET endpoint calls _userManager.InitializeAsync() which creates
+#     the default skeleton user in the database.  The POST endpoint does
+#     NOT call InitializeAsync(), so without this step there are zero users
+#     and .First() throws "Sequence contains no elements".
+# -------------------------------------------------------------------------
+- name: Ensure the initial user exists (triggers InitializeAsync)
+  ansible.builtin.uri:
+    url: "{{ jellyfin_url }}/Startup/User"
+    method: GET
+    status_code: 200
+    validate_certs: false
+  when: not compose__wizard_done
+
+# -------------------------------------------------------------------------
+# 4b. POST /Startup/User
+#     Updates the skeleton user created by InitializeAsync above.
 # -------------------------------------------------------------------------
 - name: Set admin username and password
   ansible.builtin.uri:

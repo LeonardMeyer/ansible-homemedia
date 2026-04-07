@@ -1,0 +1,3 @@
+[server]
+<domain> ansible_user=<user> ansible_become=true
+

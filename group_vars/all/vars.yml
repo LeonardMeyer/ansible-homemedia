@@ -5,7 +5,7 @@ owner: "{{ vault_owner }}"
 domain_name: "{{ vault_domain_name }}"
 timezone: Europe/Paris
 
-enable_flaresolverr: false
+enable_flaresolverr: true
 enable_mfa: false
 
 # You should leave these settings alone unless you know what you're doing
@@ -19,6 +19,7 @@ wud_prune_old_image: true
 
 caddy_access_log_path: "/var/log/caddy"
 caddy_container_caddyfile: "/etc/caddy/Caddyfile"
+caddy_jwt_shared_key: "{{ vault_caddy_jwt_shared_key }}"
 
 # Geoblocking (geoip-shell) — kernel-level geo-filtering via ipset + iptables
 geoip_renew_log_path: "/var/log/geoip-renew-certs.log"

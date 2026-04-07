@@ -1,4 +1,4 @@
-#jinja2: lstrip_blocks: "true", trim_blocks: "false"
+#jinja2: lstrip_blocks: True, trim_blocks: False
 services:
 
   deluge:
@@ -22,7 +22,6 @@ services:
     labels:
       - wud.tag.include=^\d+\.\d+\.\d+$$
 
-  # Switch to stable version when available
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest 
     container_name: prowlarr
@@ -115,7 +114,7 @@ services:
       - "TZ={{ timezone }}"
     restart: unless-stopped
     labels:
-    - wud.tag.include=^\d+\.\d+\.\d+$$
+      - wud.tag.include=^\d+\.\d+\.\d+$$
 {% endif %}
 
 
@@ -150,6 +149,7 @@ services:
       - "DOMAIN={{ domain_name }}"
       - "CADDY_LOG_PATH={{ caddy_access_log_path }}"
       - CADDY_AUTH_USERS_PATH=/auth/users.json
+      - "CADDY_JWT_SHARED_KEY={{ caddy_jwt_shared_key }}"
     restart: unless-stopped
     labels:
       - wud.watch=false
@@ -188,13 +188,15 @@ services:
       - WUD_WATCHER_SAFEUPDATE_WATCHBYDEFAULT=true                                 # Watch all containers by default
       - "WUD_WATCHER_SAFEUPDATE_CRON={{ wud_update_cron }}"                        # Cron schedule for update checks
       - WUD_WATCHER_SAFEUPDATE_WATCHALL=false                                      # Only watch running containers (not stopped/paused)
-      - WUD_WATCHER_SAFEUPDATE_JITTER=60000                                        # Random delay (ms) before hitting registries to avoid rate limiting
+      - WUD_WATCHER_SAFEUPDATE_JITTER=120000                                       # Random delay (ms) before hitting registries to avoid rate limiting
       - "WUD_REGISTRY_LSCR_PRIVATE_TOKEN={{ wud_lscr_token }}"                     # GitHub token to access the LinuxServer registry
       - "WUD_REGISTRY_LSCR_PRIVATE_USERNAME={{ wud_lscr_user }}"                   # GitHub username for the LinuxServer registry
+      - "WUD_REGISTRY_GHCR_PRIVATE_USERNAME={{ wud_lscr_token }}"
+      - "WUD_REGISTRY_GHCR_PRIVATE_TOKEN={{ wud_lscr_token }}" 
     restart: unless-stopped
 
   profilarr:
-    image: ghcr.io/dictionarry-hub/profilarr:latest
+    image: santiagosayshey/profilarr:latest
     container_name: profilarr
     expose:
       - "6868"
@@ -204,20 +206,6 @@ services:
       - "PUID={{ compose_uid }}"
       - "PGID={{ compose_gid }}"
       - "TZ={{ timezone }}"
-      - PARSER_HOST=parser
-      - PARSER_PORT=5000
-    restart: unless-stopped
-    labels:
-      - wud.tag.include=^\d+\.\d+\.\d+$$
-    depends_on:
-      parser:
-        condition: service_healthy
-
-  parser:
-    image: ghcr.io/dictionarry-hub/profilarr-parser:latest
-    container_name: profilarr-parser
-    expose:
-      - '5000'
     restart: unless-stopped
     labels:
       - wud.tag.include=^\d+\.\d+\.\d+$$

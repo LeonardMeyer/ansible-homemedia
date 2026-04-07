@@ -19,6 +19,8 @@ vault_crowdsec_enrollment_key: ""   # optional — leave empty to skip Console e
 
 vault_jellyfin_admin_pass: "changeme"
 
+vault_caddy_jwt_shared_key: "your_caddy_jwt_signing_key_here"   # min 32 chars — used by caddy-security to sign/verify JWT tokens
+
 vault_rustic_repo_password: "your_rustic_repo_password"
 vault_rustic_b2_bucket_id: "your_b2_bucket_id"
 vault_rustic_b2_application_key_id: "your_b2_key_id"

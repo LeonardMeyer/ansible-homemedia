@@ -3,15 +3,16 @@
   hosts: all
   remote_user: "{{ owner }}"
   roles:
-    - docker
-    - filesystem
-    - firewall
-    # - geoblocking
-    - crowdsec
-    - rustic
-    - compose
+    - { role: docker, tags: docker }
+    - { role: filesystem, tags: filesystem }
+    - { role: firewall, tags: firewall }
+    # - { role: geoblocking, tags: geoblocking }
+    - { role: crowdsec, tags: crowdsec }
+    - { role: rustic, tags: rustic }
+    - { role: compose, tags: compose }
   tasks:
     - name: Enable rustic backup schedule
       ansible.builtin.include_role:
         name: rustic
         tasks_from: schedule
+      tags: rustic

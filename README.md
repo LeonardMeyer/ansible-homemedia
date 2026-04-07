@@ -8,7 +8,6 @@ Ansible playbook to install a private media server. Goal was to provide a reason
 * HTTPS Reverse proxy, authentification, authorization and apps portal through [Caddy](https://caddyserver.com/) with preconfigured secured routes. 
 * Automatic updates of non major versions for SemVer containers with [What's up Docker](https://fmartinou.github.io/whats-up-docker/#/). By default, it cleans up old images and updates everyday at 4 A.M.
 * Automatic firewall configuration and secure SSH daemon setup
-* Kernel-level geoblocking with [geoip-shell](https://github.com/friendly-bits/geoip-shell) — whitelist traffic by country (default: France + Netherlands) via ipset + iptables in `mangle/PREROUTING`, blocking unwanted traffic before it reaches Docker or any application. Includes automated Let's Encrypt certificate renewal handling.
 * Intrusion detection and prevention with [CrowdSec](https://www.crowdsec.net/) — monitors SSH and Caddy access logs, bans malicious IPs at the firewall level (including Docker ports via `DOCKER-USER` chain), with community blocklists and automatic minor/patch updates
 * Monitoring of Docker using [Portainer](https://www.portainer.io)
 * Full use of the *Arr stack and [Deluge](https://deluge-torrent.org) to manage the downloads and subtitles.
@@ -25,28 +24,27 @@ These are not enabled by default, but you can change that by editing the ansible
 
 ## ⛩️ Architecture
 
-![arch](https://user-images.githubusercontent.com/1922364/170122807-79b6aa7c-869f-4475-835c-ff9fcee62b28.png)
-
-<sub>*Folder icons are a more or less simplifed view of volumes mapping*</sub>
+![arch](architecture.svg)
 
 ## ⚙️ Usage 
 
-1) Replace the placeholders in the hosts inventory file to use your server and SSH user
+1) Replace the placeholders in the hosts.example inventory file to use your server, SSH user. Then rename it to `hosts`
 2) Replace the placeholders in `group_vars/all/vars.yml` to match your setup
 3) Set up your secrets with Ansible Vault (see [Secrets management](#-secrets-management) below)
 4) Run the playbook `ansible-playbook homemedia-setup.yml -K --ask-vault-pass`
 5) SSH to your server and run `docker logs caddy` to grab default login and password ([see bottom page](https://authp.github.io/docs/authenticate/local/local)) for the Caddy portal. Go to your domain to login, change password and go to `portainer.{domain.com}` to make sure everything is up and running.
 6) Jellyfin's startup wizard is automatically completed by the playbook (admin user, locale, remote access). You can access Jellyfin at `jellyfin.{domain.com}` and map your `/homemedia/medias` media libraries as you want.
-7) Configure Deluge and the *Arr stack with the help of https://wiki.servarr.com and https://trash-guides.info/
+7) Configure Deluge and the *Arr stack with the help of [Profilarr](https://github.com/Dictionarry-Hub/profilarr)
    > ⚠️ After first start, go to Deluge → Preferences → Network and:
    > - Uncheck "Use random port"
    > - Set the incoming port to **6881** (container-internal port — Docker handles the translation to 51413 on the host side)
    > - Leave outgoing ports at 0/0
-8) (Optional) Configure Overseerr
 
 ## 🔐 Secrets management
 
 Sensitive credentials (GitHub token for the LinuxServer registry, CrowdSec enrollment key, Rustic backup password and Backblaze B2 keys) are managed with **[Ansible Vault](https://docs.ansible.com/ansible/latest/vault_guide/index.html)**, which is bundled with Ansible — no extra installation needed.
+
+When you get enrolled in the playbook, make sure to restart Crowdsec.
 
 ### First-time setup
 
@@ -117,7 +115,7 @@ Backups are handled by [Rustic](https://rustic.cli.rs/), a fast and encrypted ba
 - The systemd service stops the *Arr stack containers, runs `docker compose up rustic` (backup + prune), then restarts them — the *Arr containers are restarted even if the backup fails
 - One snapshot group is created: `arr-stack` (Sonarr, Radarr, Prowlarr, Bazarr, Profilarr configs)
 - Retention: 7 daily + 2 weekly snapshots, with automatic pruning
-- Backup logs are visible in Portainer (container stays in Exited state) and via `journalctl -u rustic-backup.service`
+- Backup logs are visible in Portainer (container stays in Exited state)
 
 **Manual operations:**
 
@@ -145,10 +143,6 @@ Jellyfin is accessible without going through the Caddy auth portal (for WebOS cl
 
 Kindly RTFM.
 
-### Why all the latest tags ?
-
-I know this is Ansible and all but the point wasn't to be idempotent. It was to just run the playbook and have it install the latest versions of everything without having to maintain said versions. Of course the downside is you could have unwanted major version updates by running it several times. Not much of a problem to me since you probably won't do that after the initial setup. If you really need to you can just disable the two tasks calling `docker compose` or outright disabling the `compose` role.
-
 ### I already have an existing enviromnent, can I use this ?
 
 Possible but not advised because this playbook was made for running on a fresh Ubuntu install. You need to watch Ansible and Docker versions as well as having a user who can write in `/` (or change `root_dir`). The playbook do use newish syntax, so Ansible >= 2.5 for the controller should suffice. For docker and compose, it is automatically installed by the playbook. However if you already have it then disable the `docker` role. Know the playbook assumes at least Compose V2, so if you're running older versions you should add back the hyphens in the `compose` role tasks. In addition be wary of the firewall and filesystem role, you may have to tweak a few things. YMMV because I haven't tested any of this, but you could using the `Vagrantfile`.
@@ -157,8 +151,6 @@ Possible but not advised because this playbook was made for running on a fresh U
 
 Not out of the box because that would force me to take into account everyone's DNS provider. Good news is that you can do it yourself [fairly easily](https://caddyserver.com/docs/caddyfile/patterns#wildcard-certificates) modifying Caddy's Dockerfile and Caddyfile.
 
-### How does geoip-shell and Crowdsec firewall bouncer work together with iptables ?
-![netfilter-geoip-crowdsec-adaptive.svg](netfilter-geoip-crowdsec-adaptive.svg)
 
 ## 📝 Testing
 

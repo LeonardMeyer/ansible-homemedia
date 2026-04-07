@@ -1,4 +1,4 @@
-#jinja2: lstrip_blocks: "true", trim_blocks: "false"
+#jinja2: lstrip_blocks: True, trim_blocks: False
 {
   order authenticate before reverse_proxy
   order authorize before reverse_proxy
@@ -16,6 +16,7 @@
       enable identity store localdb
       cookie domain {$DOMAIN}
       cookie lifetime 86400
+      crypto key sign-verify {$CADDY_JWT_SHARED_KEY}
       crypto default token lifetime 43200
       ui {
         links {
@@ -40,6 +41,7 @@
 
     authorization policy admin_policy {
         set auth url https://{$DOMAIN}
+        crypto key verify {$CADDY_JWT_SHARED_KEY} 
         allow roles authp/admin
         acl rule {
           comment allow admins
@@ -57,7 +59,7 @@
 
 (access_log) {
     log {
-      output file "{$CADDY_LOG_PATH}/{args.0}.log" {
+      output file "{$CADDY_LOG_PATH}/{args[0]}.log" {
         roll_keep 5
         roll_keep_for 720h
       }
@@ -65,19 +67,19 @@
 }
 
 (protected_route) {
-  {args.0}.{$DOMAIN} {
-      import access_log {args.0}
+  {args[0]}.{$DOMAIN} {
+      import access_log {args[0]}
       authorize with admin_policy
-      reverse_proxy {args.1}
+      reverse_proxy {args[1]}
   }
 }
 
 
 (cors) {
-	@origin{args.0} header Origin {args.0}
-	header @origin{args.0} {
+	@origin{args[0]} header Origin {args[0]}
+	header @origin{args[0]} {
 		Vary Origin
-		Access-Control-Allow-Origin "{args.0}"
+		Access-Control-Allow-Origin "{args[0]}"
 		Access-Control-Allow-Headers "*"
 		Access-Control-Allow-Methods "*"
 		Access-Control-Allow-Credentials "true"

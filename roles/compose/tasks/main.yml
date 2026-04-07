@@ -7,12 +7,8 @@
 
 - name: Setting uid and gid as facts
   ansible.builtin.set_fact:
-    compose_uid: "{{ getent_passwd[owner][1] }}"
-    compose_gid: "{{ getent_passwd[owner][2] }}"
-
-- name: Display UID and GID
-  ansible.builtin.debug:
-    msg: Retrieved user with UID {{ compose_uid }} and GID {{ compose_gid }}
+    compose_uid: "{{ ansible_facts.getent_passwd[owner][1] }}"
+    compose_gid: "{{ ansible_facts.getent_passwd[owner][2] }}"
 
 - name: Copy docker-compose file
   ansible.builtin.template:
@@ -29,6 +25,7 @@
     mode: '0770'
     src: templates/Caddyfile.j2
     dest: "{{ app_dir }}/caddy/Caddyfile"
+  register: caddy_caddyfile
 
 - name: Copy Caddy Dockerfile
   ansible.builtin.template:
@@ -37,7 +34,24 @@
     mode: '0770'
     src: templates/Dockerfile
     dest: "{{ app_dir }}/caddy/Dockerfile"
-  notify: Rebuild Caddy image
+  register: caddy_dockerfile
+
+- name: Rebuild Caddy image
+  community.docker.docker_compose_v2:
+    project_src: /etc/docker/
+    build: always
+    services:
+      - caddy
+    state: present
+  when: caddy_dockerfile.changed
+
+- name: Restart Caddy
+  community.docker.docker_compose_v2:
+    project_src: /etc/docker/
+    services:
+      - caddy
+    state: restarted
+  when: caddy_caddyfile.changed and not caddy_dockerfile.changed
 
 - name: Pull and start docker containers
   community.docker.docker_compose_v2:
@@ -50,7 +64,7 @@
 - name: Show compose actions
   ansible.builtin.debug:
     var: compose_result.actions
-  when: compose_result.actions # noqa: no-handler
+  when: compose_result.actions | length > 0 # noqa: no-handler
 
 - name: Configure Jellyfin startup wizard
   ansible.builtin.import_tasks: jellyfin.yml
