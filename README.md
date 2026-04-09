@@ -12,6 +12,7 @@ Ansible playbook to install a private media server. Goal was to provide a reason
 * Monitoring of Docker using [Portainer](https://www.portainer.io)
 * Full use of the *Arr stack and [Deluge](https://deluge-torrent.org) to manage the downloads and subtitles.
 * Proper setup of the filesystem and permissions to enable hardlinks and atomic moves
+* Handle various archives from the *Arr stack with [Unpackerr](https://github.com/unpackerr/unpackerr)
 * Streaming and organization of your medias using [Jellyfin](https://jellyfin.org), exposed outside Caddy security for WebOS client compatibility
 * Automated encrypted backups to [Backblaze B2](https://www.backblaze.com/cloud-storage) with [Rustic](https://rustic.cli.rs/) — daily scheduled backups of Docker container configs via systemd timer, with retention policy (7 daily, 2 weekly) and automatic pruning
 

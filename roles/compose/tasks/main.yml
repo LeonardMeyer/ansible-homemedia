@@ -25,7 +25,7 @@
     mode: '0770'
     src: templates/Caddyfile.j2
     dest: "{{ app_dir }}/caddy/Caddyfile"
-  register: caddy_caddyfile
+  register: compose_caddy_caddyfile
 
 - name: Copy Caddy Dockerfile
   ansible.builtin.template:
@@ -34,24 +34,24 @@
     mode: '0770'
     src: templates/Dockerfile
     dest: "{{ app_dir }}/caddy/Dockerfile"
-  register: caddy_dockerfile
+  register: compose_caddy_dockerfile
 
-- name: Rebuild Caddy image
+- name: Rebuild Caddy image # noqa: no-handler
   community.docker.docker_compose_v2:
     project_src: /etc/docker/
     build: always
     services:
       - caddy
     state: present
-  when: caddy_dockerfile.changed
+  when: compose_caddy_dockerfile.changed
 
-- name: Restart Caddy
+- name: Restart Caddy # noqa: no-handler
   community.docker.docker_compose_v2:
     project_src: /etc/docker/
     services:
       - caddy
     state: restarted
-  when: caddy_caddyfile.changed and not caddy_dockerfile.changed
+  when: compose_caddy_caddyfile.changed and not compose_caddy_dockerfile.changed
 
 - name: Pull and start docker containers
   community.docker.docker_compose_v2:
@@ -59,12 +59,69 @@
     pull: missing
     build: policy
     state: present
+    services: >-
+      {{ ['deluge', 'prowlarr', 'sonarr', 'radarr', 'bazarr',
+          'jellyfin', 'portainer', 'caddy', 'rustic',
+          'whatsupdocker', 'profilarr']
+         + (['flaresolverr'] if enable_flaresolverr | default(false) else []) }}
   register: compose_result
 
 - name: Show compose actions
   ansible.builtin.debug:
     var: compose_result.actions
   when: compose_result.actions | length > 0 # noqa: no-handler
+
+- name: Install lxml (required by community.general.xml)
+  ansible.builtin.apt:
+    name: python3-lxml
+    state: present
+
+- name: Wait for Sonarr to generate config
+  ansible.builtin.wait_for:
+    path: "{{ app_dir }}/sonarr/config/config.xml"
+    state: present
+    timeout: 60
+
+- name: Wait for Radarr to generate config
+  ansible.builtin.wait_for:
+    path: "{{ app_dir }}/radarr/config/config.xml"
+    state: present
+    timeout: 60
+
+- name: Get Sonarr API key
+  community.general.xml:
+    path: "{{ app_dir }}/sonarr/config/config.xml"
+    xpath: /Config/ApiKey
+    content: text
+  register: compose_sonarr_config
+
+- name: Get Radarr API key
+  community.general.xml:
+    path: "{{ app_dir }}/radarr/config/config.xml"
+    xpath: /Config/ApiKey
+    content: text
+  register: compose_radarr_config
+
+- name: Set API keys as facts
+  ansible.builtin.set_fact:
+    compose_sonarr_api_key: "{{ compose_sonarr_config.matches[0].ApiKey }}"
+    compose_radarr_api_key: "{{ compose_radarr_config.matches[0].ApiKey }}"
+
+- name: Re-render docker-compose with API keys
+  ansible.builtin.template:
+    owner: "{{ owner }}"
+    group: "{{ owner }}"
+    mode: '0770'
+    src: templates/docker-compose.yml.j2
+    dest: /etc/docker/docker-compose.yml
+
+- name: Start Unpackerr
+  community.docker.docker_compose_v2:
+    project_src: /etc/docker/
+    pull: missing
+    services:
+      - unpackerr
+    state: present
 
 - name: Configure Jellyfin startup wizard
   ansible.builtin.import_tasks: jellyfin.yml

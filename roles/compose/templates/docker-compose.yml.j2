@@ -209,3 +209,19 @@ services:
     restart: unless-stopped
     labels:
       - wud.tag.include=^\d+\.\d+\.\d+$$
+
+  unpackerr:
+    image: golift/unpackerr
+    container_name: unpackerr
+    user: "{{ compose_uid }}:{{ compose_gid }}"
+    volumes:
+      - "{{ root_dir }}:{{ root_dir }}"
+    environment:
+      - "TZ={{ timezone }}"
+      - UN_SONARR_0_URL=http://sonarr:8989
+      - "UN_SONARR_0_API_KEY={{ compose_sonarr_api_key | default('') }}"
+      - UN_RADARR_0_URL=http://radarr:7878
+      - "UN_RADARR_0_API_KEY={{ compose_radarr_api_key | default('') }}"
+    restart: unless-stopped
+    labels:
+      - wud.tag.include=^\d+\.\d+\.\d+$$
