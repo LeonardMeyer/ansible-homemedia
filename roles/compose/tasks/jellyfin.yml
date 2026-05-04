@@ -1,0 +1,135 @@
+---
+#
+# Configure the Jellyfin startup wizard via the StartupController REST API.
+# If the wizard is already complete, all tasks are skipped.
+#
+# Verified request order from real network captures:
+#   GET  /System/Info/Public (health check)
+#   POST /Startup/Configuration
+#   GET  /Startup/User          ← triggers InitializeAsync / default user creation
+#   POST /Startup/User
+#   POST /Startup/RemoteAccess
+#   POST /Startup/Complete
+
+# -------------------------------------------------------------------------
+# 1. Wait for Jellyfin to be ready
+#    /System/Info/Public requires no auth and responds as soon as the
+#    process is listening.
+# -------------------------------------------------------------------------
+- name: Wait for Jellyfin to respond
+  ansible.builtin.uri:
+    url: "{{ jellyfin_url }}/System/Info/Public"
+    method: GET
+    status_code: 200
+    timeout: 5
+    validate_certs: false
+  register: compose__health
+  until: compose__health.status == 200
+  retries: 24        # 2 minutes max (24 × 5s)
+  delay: 5
+
+# -------------------------------------------------------------------------
+# 2. Check whether the wizard is already complete (idempotency)
+#    After POST /Startup/Complete, all /Startup/* endpoints return 401.
+# -------------------------------------------------------------------------
+- name: Check whether the startup wizard is already complete
+  ansible.builtin.uri:
+    url: "{{ jellyfin_url }}/Startup/Configuration"
+    method: GET
+    validate_certs: false
+  register: compose__wizard_check
+  failed_when: false
+
+- name: Store wizard completion state
+  ansible.builtin.set_fact:
+    compose__wizard_done: "{{ compose__wizard_check.status != 200 }}"
+
+- name: Report wizard skipped (status != 200)
+  ansible.builtin.debug:
+    msg: "Startup wizard skipped (status code: {{ compose__wizard_check.status }}), nothing to do."
+  when: compose__wizard_done
+
+# -------------------------------------------------------------------------
+# 3. POST /Startup/Configuration
+#    Exact body observed in network captures.
+# -------------------------------------------------------------------------
+- name: Configure server name and locale
+  ansible.builtin.uri:
+    url: "{{ jellyfin_url }}/Startup/Configuration"
+    method: POST
+    body_format: json
+    body:
+      ServerName: "{{ jellyfin_server_name }}"
+      UICulture: "{{ jellyfin_ui_culture }}"
+      MetadataCountryCode: "{{ jellyfin_metadata_country }}"
+      PreferredMetadataLanguage: "{{ jellyfin_metadata_lang }}"
+    status_code: 204
+    validate_certs: false
+  when: not compose__wizard_done
+
+# -------------------------------------------------------------------------
+# 4a. GET /Startup/User
+#     The GET endpoint calls _userManager.InitializeAsync() which creates
+#     the default skeleton user in the database.  The POST endpoint does
+#     NOT call InitializeAsync(), so without this step there are zero users
+#     and .First() throws "Sequence contains no elements".
+# -------------------------------------------------------------------------
+- name: Ensure the initial user exists (triggers InitializeAsync)
+  ansible.builtin.uri:
+    url: "{{ jellyfin_url }}/Startup/User"
+    method: GET
+    status_code: 200
+    validate_certs: false
+  when: not compose__wizard_done
+
+# -------------------------------------------------------------------------
+# 4b. POST /Startup/User
+#     Updates the skeleton user created by InitializeAsync above.
+# -------------------------------------------------------------------------
+- name: Set admin username and password
+  ansible.builtin.uri:
+    url: "{{ jellyfin_url }}/Startup/User"
+    method: POST
+    body_format: json
+    body:
+      Name: "{{ jellyfin_admin_name }}"
+      Password: "{{ jellyfin_admin_pass }}"
+    status_code: 204
+    validate_certs: false
+  when: not compose__wizard_done
+  no_log: true  # never log the password
+
+# -------------------------------------------------------------------------
+# 5. POST /Startup/RemoteAccess
+#    Body verified against StartupRemoteAccessDto: only EnableRemoteAccess.
+# -------------------------------------------------------------------------
+- name: Configure remote access
+  ansible.builtin.uri:
+    url: "{{ jellyfin_url }}/Startup/RemoteAccess"
+    method: POST
+    body_format: json
+    body:
+      EnableRemoteAccess: "{{ jellyfin_enable_remote_access }}"
+    status_code: 204
+    validate_certs: false
+  when: not compose__wizard_done
+
+# -------------------------------------------------------------------------
+# 6. POST /Startup/Complete
+#    Sets IsStartupWizardCompleted = true on the server.
+#    All /Startup/* endpoints will return 401 for unauthenticated requests
+#    from this point on.
+# -------------------------------------------------------------------------
+- name: Complete the startup wizard
+  ansible.builtin.uri:
+    url: "{{ jellyfin_url }}/Startup/Complete"
+    method: POST
+    body: ""
+    status_code: 204
+    validate_certs: false
+  when: not compose__wizard_done
+
+- name: Report successful initialisation
+  ansible.builtin.debug:
+    msg: "Jellyfin initialised: admin={{ jellyfin_admin_name }}, wizard locked."
+  when: not compose__wizard_done

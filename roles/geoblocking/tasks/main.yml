@@ -1,0 +1,185 @@
+---
+
+# 1. Prerequisites
+
+- name: Install geoip-shell prerequisites
+  ansible.builtin.apt:
+    update_cache: true
+    pkg:
+      - ipset
+      - curl
+      - openssl
+
+# 2. Check current installation
+
+- name: Check if geoip-shell is installed
+  ansible.builtin.stat:
+    path: /usr/bin/geoip-shell
+  register: geoblocking__geoip_shell_bin
+
+- name: Get installed geoip-shell version
+  ansible.builtin.command: geoip-shell -V
+  register: geoblocking__geoip_installed_version
+  changed_when: false
+  when: geoblocking__geoip_shell_bin.stat.exists
+
+- name: Get latest geoip-shell release from GitHub
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/friendly-bits/geoip-shell/releases/latest
+    return_content: true
+  register: geoblocking__geoip_latest_release
+  changed_when: false
+
+- name: Set geoip-shell version facts
+  ansible.builtin.set_fact:
+    geoblocking__geoip_latest_version: "{{ geoblocking__geoip_latest_release.json.tag_name }}"
+    geoblocking__geoip_current_version: "{{ geoblocking__geoip_installed_version.stdout | default('') | trim }}"
+    geoblocking__geoip_tarball_url: "{{ geoblocking__geoip_latest_release.json.tarball_url }}"
+
+- name: Determine if geoip-shell install/update is needed
+  ansible.builtin.set_fact:
+    geoblocking__geoip_needs_install: >-
+      {{ not geoblocking__geoip_shell_bin.stat.exists
+         or geoblocking__geoip_current_version != geoblocking__geoip_latest_version }}
+
+# 3. Download and install geoip-shell
+
+- name: Create temporary directory for geoip-shell
+  ansible.builtin.tempfile:
+    state: directory
+    prefix: geoip-shell-
+  register: geoblocking__geoip_tmpdir
+  when: geoblocking__geoip_needs_install
+
+- name: Download geoip-shell release
+  ansible.builtin.get_url:
+    url: "{{ geoblocking__geoip_tarball_url }}"
+    dest: "{{ geoblocking__geoip_tmpdir.path }}/geoip-shell.tar.gz"
+    mode: "0644"
+  when: geoblocking__geoip_needs_install
+
+- name: Extract geoip-shell release
+  ansible.builtin.unarchive:
+    src: "{{ geoblocking__geoip_tmpdir.path }}/geoip-shell.tar.gz"
+    dest: "{{ geoblocking__geoip_tmpdir.path }}"
+    remote_src: true
+  when: geoblocking__geoip_needs_install
+
+- name: Find extracted geoip-shell directory
+  ansible.builtin.find:
+    paths: "{{ geoblocking__geoip_tmpdir.path }}"
+    file_type: directory
+    patterns: "friendly-bits-geoip-shell-*"
+  register: geoblocking__geoip_extracted_dir
+  when: geoblocking__geoip_needs_install
+
+- name: Install geoip-shell
+  ansible.builtin.command: sh geoip-shell-install.sh -z
+  args:
+    chdir: "{{ geoblocking__geoip_extracted_dir.files[0].path }}"
+  when: geoblocking__geoip_needs_install
+  changed_when: geoblocking__geoip_needs_install
+
+- name: Clean up temporary directory
+  ansible.builtin.file:
+    path: "{{ geoblocking__geoip_tmpdir.path }}"
+    state: absent
+  when: geoblocking__geoip_needs_install
+
+# 4. Configure geoip-shell
+
+- name: Check geoip-shell status
+  ansible.builtin.command: geoip-shell status
+  register: geoblocking__geoip_status
+  changed_when: false
+  failed_when: false
+
+- name: Determine if geoip-shell configuration is needed
+  ansible.builtin.set_fact:
+    geoblocking__geoip_needs_configure: >-
+      {{
+        geoblocking__geoip_status.rc != 0
+        or geoip_mode not in geoblocking__geoip_status.stdout | lower
+        or (geoip_countries.split() | sort | join(' ')) != (geoblocking__geoip_status.stdout | regex_findall('[A-Z]{2}') | intersect(geoip_countries.split()) | sort | join(' '))
+      }}
+
+- name: Build geoip-shell configure command
+  ansible.builtin.set_fact:
+    geoblocking__geoip_configure_cmd: >-
+      geoip-shell configure -z
+      -m {{ geoip_mode }}
+      -c "{{ geoip_countries }}"
+      -u {{ geoip_source }}
+      -r {{ geoip_user_country }}
+      -i {{ geoip_interfaces }}
+      {{ '-t "' + geoip_trusted_ips + '"' if geoip_trusted_ips | default('') | length > 0 else '' }}
+
+- name: Configure geoip-shell
+  ansible.builtin.command: "{{ geoblocking__geoip_configure_cmd }}"
+  when: geoblocking__geoip_needs_configure
+  changed_when: geoblocking__geoip_needs_configure
+
+# 5. Systemd override for CrowdSec firewall bouncer (conditional)
+
+- name: Check if crowdsec-firewall-bouncer service exists
+  ansible.builtin.stat:
+    path: /lib/systemd/system/crowdsec-firewall-bouncer.service
+  register: geoblocking__bouncer_service_lib
+
+- name: Check if crowdsec-firewall-bouncer service exists (etc)
+  ansible.builtin.stat:
+    path: /etc/systemd/system/crowdsec-firewall-bouncer.service
+  register: geoblocking__bouncer_service_etc
+
+- name: Set bouncer service existence fact
+  ansible.builtin.set_fact:
+    geoblocking__bouncer_service_exists: "{{ geoblocking__bouncer_service_lib.stat.exists or geoblocking__bouncer_service_etc.stat.exists }}"
+
+- name: Create systemd override directory for crowdsec-firewall-bouncer
+  ansible.builtin.file:
+    path: /etc/systemd/system/crowdsec-firewall-bouncer.service.d
+    state: directory
+    mode: "0755"
+  when: geoblocking__bouncer_service_exists
+
+- name: Configure crowdsec-firewall-bouncer to start after Docker
+  ansible.builtin.template:
+    src: crowdsec-bouncer-override.conf.j2
+    dest: /etc/systemd/system/crowdsec-firewall-bouncer.service.d/after-docker.conf
+    mode: "0644"
+  when: geoblocking__bouncer_service_exists
+  notify: Reload systemd
+
+# 6. Let's Encrypt certificate renewal cron
+
+- name: Deploy certificate renewal script
+  ansible.builtin.template:
+    src: geoip-renew-certs.sh.j2
+    dest: /usr/local/sbin/geoip-renew-certs.sh
+    owner: "{{ owner }}"
+    group: "{{ owner }}"
+    mode: "0700"
+
+- name: Configure daily certificate renewal cron job
+  ansible.builtin.cron:
+    name: "geoip-shell - Let's Encrypt certificate renewal"
+    user: "{{ owner }}"
+    minute: "30"
+    hour: "3"
+    job: "/usr/local/sbin/geoip-renew-certs.sh >> {{ geoip_renew_log_path }} 2>&1"
+
+- name: Deploy logrotate configuration for certificate renewal logs
+  ansible.builtin.template:
+    src: geoip-renew-certs-logrotate.j2
+    dest: /etc/logrotate.d/geoip-renew-certs
+    owner: "{{ owner }}"
+    group: "{{ owner }}"
+    mode: "0644"
+
+# 7. Validation
+
+- name: Validate geoip-shell is active
+  ansible.builtin.command: geoip-shell status
+  register: geoblocking__geoip_validation
+  changed_when: false
+  failed_when: "'active' not in geoblocking__geoip_validation.stdout | lower"

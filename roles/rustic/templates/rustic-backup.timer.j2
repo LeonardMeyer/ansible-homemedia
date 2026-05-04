@@ -1,0 +1,9 @@
+[Unit]
+Description=Rustic backup quotidien
+
+[Timer]
+OnCalendar={{ rustic_backup_schedule }}
+Persistent=true
+
+[Install]
+WantedBy=timers.target

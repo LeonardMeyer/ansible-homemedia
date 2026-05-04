@@ -1,0 +1,206 @@
+---
+
+# The apt package auto-registers a bouncer and writes its key to
+# /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml.
+# We persist the key separately in /etc/crowdsec/bouncer_key so that
+# subsequent runs stay idempotent even if we re-template the config.
+#
+# Logic (idempotent):
+#   if key_file exists and bouncer registered:        # happy path
+#       key = read(key_file)                          # → copy is a no-op
+#   elif key_file exists and not bouncer registered:  # bouncer was deleted
+#       key = cscli bouncers add(...)                 # → overwrite key_file (old key is invalid)
+#   elif not key_file and bouncer registered:         # first Ansible run (apt auto-created bouncer)
+#       key = read(apt-generated config)              # → create key_file
+#   else:                                             # clean install (LAPI was down at apt time)
+#       key = cscli bouncers add(...)                 # → create key_file
+#
+#   template config with key  (unchanged content = no restart)
+
+- name: Install prerequisites
+  ansible.builtin.apt:
+    update_cache: true
+    pkg:
+      - curl
+      - gnupg
+      - apt-transport-https
+      - unattended-upgrades
+
+- name: Ensure /etc/apt/keyrings directory exists
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Download CrowdSec GPG key
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      curl -fsSL https://packagecloud.io/crowdsec/crowdsec/gpgkey \
+        | gpg --dearmor -o /etc/apt/keyrings/crowdsec-archive-keyring.gpg
+    executable: /bin/bash
+    creates: /etc/apt/keyrings/crowdsec-archive-keyring.gpg
+  changed_when: false
+
+- name: Add CrowdSec repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [signed-by=/etc/apt/keyrings/crowdsec-archive-keyring.gpg]
+      https://packagecloud.io/crowdsec/crowdsec/{{ ansible_distribution | lower }}/
+      {{ ansible_distribution_release }} main
+    state: present
+    filename: crowdsec
+
+- name: Install CrowdSec
+  ansible.builtin.apt:
+    update_cache: true
+    pkg:
+      - crowdsec
+      - crowdsec-firewall-bouncer-iptables
+
+- name: Check installed CrowdSec collections
+  ansible.builtin.command: "cscli collections list -o json"
+  register: crowdsec_cscli_collections
+  changed_when: false
+
+- name: Install CrowdSec collections
+  ansible.builtin.command: "cscli collections install {{ item }}"
+  loop:
+    - crowdsecurity/linux
+    - crowdsecurity/caddy
+  when: "item not in ((crowdsec_cscli_collections.stdout | from_json).collections | map(attribute='name'))"
+  changed_when: true
+  notify: Restart crowdsec
+
+- name: Ensure acquis.d directory exists
+  ansible.builtin.file:
+    path: /etc/crowdsec/acquis.d
+    state: directory
+    mode: "0755"
+
+- name: Configure Caddy log acquisition
+  ansible.builtin.template:
+    src: acquis-caddy.yaml.j2
+    dest: /etc/crowdsec/acquis.d/caddy.yaml
+    mode: "0644"
+  notify: Restart crowdsec
+
+# Firewall bouncer — manage API key and configure with DOCKER-USER chain
+
+- name: Check if bouncer key file exists
+  ansible.builtin.stat:
+    path: /etc/crowdsec/bouncer_key
+  register: crowdsec__bouncer_key_file
+
+- name: List registered bouncers
+  ansible.builtin.command: cscli bouncers list -o json
+  register: crowdsec__bouncer_list_raw
+  changed_when: false
+
+- name: Set bouncer registration fact
+  ansible.builtin.set_fact:
+    crowdsec__bouncer_registered: >-
+      {{ ('cs-firewall-bouncer' in (crowdsec__bouncer_list_raw.stdout | from_json | map(attribute='name') | list)) | bool }}
+
+# Case: file exists + bouncer registered → read key from persistent file
+- name: Read bouncer key from persistent file
+  ansible.builtin.slurp:
+    src: /etc/crowdsec/bouncer_key
+  register: crowdsec__key_from_file
+  when: crowdsec__bouncer_key_file.stat.exists and crowdsec__bouncer_registered
+
+# Case: !file + bouncer registered → read from package-generated config
+- name: Read bouncer key from existing config
+  ansible.builtin.include_vars:
+    file: /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
+    name: _existing_bouncer_config
+  when: not crowdsec__bouncer_key_file.stat.exists and crowdsec__bouncer_registered
+
+# Case: bouncer NOT registered → create it
+- name: Create bouncer in CrowdSec
+  ansible.builtin.command: cscli bouncers add cs-firewall-bouncer -o json
+  register: crowdsec__created_bouncer_raw
+  when: not crowdsec__bouncer_registered
+  changed_when: true
+
+# Resolve final API key
+- name: Set bouncer API key
+  ansible.builtin.set_fact:
+    crowdsec__bouncer_api_key: >-
+      {%- if crowdsec__key_from_file is defined and crowdsec__key_from_file.content is defined -%}
+        {{ crowdsec__key_from_file.content | b64decode | trim }}
+      {%- elif _existing_bouncer_config is defined -%}
+        {{ _existing_bouncer_config.api_key }}
+      {%- else -%}
+        {{ crowdsec__created_bouncer_raw.stdout | from_json }}
+      {%- endif -%}
+
+- name: Assert bouncer API key is set
+  ansible.builtin.assert:
+    that:
+      - crowdsec__bouncer_api_key | length > 0
+    fail_msg: "crowdsec__bouncer_api_key is empty — check bouncer key resolution logic"
+
+# Persist key file (idempotent — no change if content identical)
+- name: Save bouncer key to persistent file
+  ansible.builtin.copy:
+    content: "{{ crowdsec__bouncer_api_key }}"
+    dest: /etc/crowdsec/bouncer_key
+    owner: "{{ owner }}"
+    group: "{{ owner }}"
+    mode: "0600"
+  no_log: true
+
+# Template config
+- name: Configure firewall bouncer
+  ansible.builtin.template:
+    src: crowdsec-firewall-bouncer.yaml.j2
+    dest: /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
+    owner: "{{ owner }}"
+    group: "{{ owner }}"
+    mode: "0600"
+  no_log: true
+  notify: Restart crowdsec-firewall-bouncer
+
+# Apt pinning — lock CrowdSec to current major version for safe auto-updates
+- name: Get installed CrowdSec major version
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      dpkg -s crowdsec | grep '^Version' | cut -d' ' -f2 | cut -d'.' -f1
+    executable: /bin/bash
+  register: crowdsec_major_version
+  changed_when: false
+
+- name: Pin CrowdSec to current major version
+  ansible.builtin.template:
+    src: apt-preferences-crowdsec.j2
+    dest: /etc/apt/preferences.d/crowdsec
+    mode: "0644"
+
+# Unattended upgrades — auto-update CrowdSec (minor/patch only thanks to pinning)
+- name: Configure unattended-upgrades for CrowdSec
+  ansible.builtin.template:
+    src: unattended-upgrades-crowdsec.j2
+    dest: /etc/apt/apt.conf.d/51unattended-upgrades-crowdsec
+    mode: "0644"
+
+# Optional enrollment to CrowdSec Console (free SaaS dashboard)
+- name: Enroll to CrowdSec Console
+  ansible.builtin.command: "cscli console enroll {{ crowdsec_enrollment_key }}"
+  when: crowdsec_enrollment_key | default('') | length > 0
+  register: crowdsec_enrollment_result
+  changed_when: "'successfully enrolled' in (crowdsec_enrollment_result.stderr | default(''))"
+  failed_when: "'Error:' in (crowdsec_enrollment_result.stderr | default(''))"
+
+- name: Enable and start CrowdSec
+  ansible.builtin.systemd:
+    name: crowdsec
+    enabled: true
+    state: started
+
+- name: Enable and start CrowdSec firewall bouncer
+  ansible.builtin.systemd:
+    name: crowdsec-firewall-bouncer
+    enabled: true
+    state: started

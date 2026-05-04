@@ -1,3 +1,0 @@
-[server]
-<domain/ip> ansible_user=<ssh_user> ansible_become=true
-

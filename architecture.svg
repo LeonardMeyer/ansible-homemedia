@@ -1,0 +1,404 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1300" width="1600" height="1300" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#666"/>
+    </marker>
+    <marker id="arrow-teal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#00897B"/>
+    </marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#7B1FA2"/>
+    </marker>
+    <marker id="arrow-brown" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#795548"/>
+    </marker>
+    <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#E65100"/>
+    </marker>
+    <filter id="shadow">
+      <feDropShadow dx="1" dy="1" stdDeviation="2" flood-color="#00000018"/>
+    </filter>
+    <style>
+      :root {
+        --bg:           #FAFAFA;
+        --host-fill:    #FFFFFF;
+        --host-stroke:  #9E9E9E;
+        --t-main:       #333333;
+        --t-mid:        #555555;
+        --t-muted:      #888888;
+        --sep:          #E0E0E0;
+
+        --crowdsec-bg:  #F3E5F5;
+        --systemd-bg:   #FFF8E1;
+        --docker-bg:    #E8EAF6;
+        --auth-bg:      #E8F5E9;
+        --caddy-bg:     #E0F2F1;
+        --volumes-bg:   #FFF8E1;
+        --cnt-bg:       #FFFFFF;
+
+        --internet-bg:  #FFF3E0;
+        --b2-bg:        #FBE9E7;
+        --ufw-bg:       #FFEBEE;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg:           #1A1A1A;
+          --host-fill:    #242424;
+          --host-stroke:  #505050;
+          --t-main:       #E0E0E0;
+          --t-mid:        #AAAAAA;
+          --t-muted:      #707070;
+          --sep:          #383838;
+
+          --crowdsec-bg:  #271530;
+          --systemd-bg:   #272210;
+          --docker-bg:    #1A1D3A;
+          --auth-bg:      #152415;
+          --caddy-bg:     #0D2824;
+          --volumes-bg:   #272210;
+          --cnt-bg:       #2A2A2A;
+
+          --internet-bg:  #271A08;
+          --b2-bg:        #271008;
+          --ufw-bg:       #270808;
+        }
+      }
+
+      .bg          { fill: var(--bg); }
+      .host-box    { fill: var(--host-fill); stroke: var(--host-stroke); }
+      .crowdsec-bg { fill: var(--crowdsec-bg); }
+      .systemd-bg  { fill: var(--systemd-bg); }
+      .docker-bg   { fill: var(--docker-bg); }
+      .auth-bg     { fill: var(--auth-bg); }
+      .caddy-bg    { fill: var(--caddy-bg); }
+      .volumes-bg  { fill: var(--volumes-bg); }
+      .cnt-bg      { fill: var(--cnt-bg); }
+      .internet-bg { fill: var(--internet-bg); }
+      .b2-bg       { fill: var(--b2-bg); }
+      .ufw-bg      { fill: var(--ufw-bg); }
+
+      .t-main  { fill: var(--t-main); }
+      .t-mid   { fill: var(--t-mid); }
+      .t-muted { fill: var(--t-muted); }
+      .sep     { stroke: var(--sep); }
+    </style>
+  </defs>
+
+  <!-- BACKGROUND -->
+  <rect width="1600" height="1300" class="bg" rx="0"/>
+
+  <!-- INTERNET -->
+  <ellipse cx="750" cy="42" rx="130" ry="32" class="internet-bg" stroke="#E65100" stroke-width="2"/>
+  <text x="750" y="47" text-anchor="middle" font-size="15" font-weight="bold" fill="#E65100">Internet</text>
+
+  <!-- Arrows Internet to UFW -->
+  <line x1="660" y1="72" x2="660" y2="100" stroke="#E65100" stroke-width="2" marker-end="url(#arrow-orange)"/>
+  <line x1="840" y1="72" x2="840" y2="100" stroke="#E65100" stroke-width="2" marker-end="url(#arrow-orange)"/>
+  <text x="620" y="92" text-anchor="middle" font-size="10" fill="#E65100" font-weight="bold">:80 / :443</text>
+  <text x="886" y="92" text-anchor="middle" font-size="10" fill="#E65100" font-weight="bold">:51413</text>
+
+  <!-- UFW FIREWALL -->
+  <rect x="200" y="102" width="1200" height="42" rx="8" class="ufw-bg" stroke="#C62828" stroke-width="2"/>
+  <text x="800" y="128" text-anchor="middle" font-size="13" font-weight="bold" fill="#C62828">UFW Firewall — Open ports: 22 (SSH), 80, 443, 51413</text>
+
+  <!-- Arrows UFW to Host -->
+  <line x1="660" y1="144" x2="660" y2="180" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="840" y1="144" x2="840" y2="180" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- HOST BOX -->
+  <rect x="50" y="180" width="1500" height="1000" rx="12" class="host-box" stroke-width="2"/>
+  <text x="75" y="202" font-size="16" font-weight="bold" class="t-main">Host Server (Debian)</text>
+
+  <!-- CROWDSEC SECTION -->
+  <rect x="80" y="215" width="660" height="115" rx="8" class="crowdsec-bg" stroke="#7B1FA2" stroke-width="1.5"/>
+  <text x="100" y="238" font-size="13" font-weight="bold" fill="#7B1FA2">CrowdSec (on host)</text>
+  <text x="100" y="258" font-size="11" class="t-mid">LAPI Engine: analyzes logs, generates decisions</text>
+  <text x="100" y="276" font-size="11" class="t-mid">Reads Caddy logs: /var/log/caddy/*.log</text>
+  <text x="100" y="294" font-size="11" class="t-mid">Firewall Bouncer: iptables (INPUT + DOCKER-USER chains)</text>
+  <text x="100" y="312" font-size="11" class="t-mid">Action: DROP malicious IPs</text>
+
+  <!-- Arrow CrowdSec to UFW (bouncer) -->
+  <path d="M 410 215 L 410 144" fill="none" stroke="#7B1FA2" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-purple)"/>
+  <text x="420" y="183" font-size="9" fill="#7B1FA2" font-weight="bold">iptables DROP</text>
+
+  <!-- SYSTEMD SECTION -->
+  <rect x="780" y="215" width="740" height="115" rx="8" class="systemd-bg" stroke="#F9A825" stroke-width="1.5"/>
+  <text x="800" y="238" font-size="13" font-weight="bold" fill="#F57F17">systemd: rustic-backup.timer</text>
+  <text x="800" y="258" font-size="11" class="t-mid">Schedule: daily at 03:00</text>
+  <text x="800" y="276" font-size="11" class="t-mid">1. Stop: sonarr, radarr, prowlarr, bazarr, profilarr</text>
+  <text x="800" y="294" font-size="11" class="t-mid">2. Run: docker compose up rustic (backup to B2)</text>
+  <text x="800" y="312" font-size="11" class="t-mid">3. Restart stopped containers</text>
+
+  <!-- DOCKER NETWORK BOX -->
+  <rect x="80" y="355" width="1440" height="405" rx="10" class="docker-bg" stroke="#3F51B5" stroke-width="1.5"/>
+  <text x="105" y="378" font-size="14" font-weight="bold" fill="#303F9F">Docker Network (bridge compose)</text>
+  <text x="440" y="378" font-size="10" fill="#5C6BC0">Containers communicate via internal DNS name</text>
+
+  <!-- CADDY CONTAINER -->
+  <rect x="490" y="390" width="540" height="60" rx="8" class="caddy-bg" stroke="#00897B" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="490" y="390" width="5" height="60" rx="2" fill="#00897B"/>
+  <text x="510" y="412" font-size="14" font-weight="bold" fill="#00695C">Caddy</text>
+  <text x="600" y="412" font-size="11" fill="#00897B">:80 / :443 — Reverse Proxy + Auth Portal (caddy-security)</text>
+  <text x="510" y="432" font-size="10" class="t-muted">Custom image: caddy + caddy-security + caddy-ratelimit</text>
+
+  <!-- Arrow Caddy to Auth group -->
+  <line x1="760" y1="450" x2="760" y2="470" stroke="#00897B" stroke-width="2" marker-end="url(#arrow-teal)"/>
+
+  <!-- AUTH GROUP -->
+  <rect x="225" y="472" width="1070" height="170" rx="8" class="auth-bg" stroke="#4CAF50" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="250" y="494" font-size="12" font-weight="bold" fill="#2E7D32">Services protected by Caddy authentication (reverse proxy + auth portal)</text>
+
+  <!-- Row 1 containers -->
+  <!-- Sonarr -->
+  <rect x="253" y="504" width="200" height="55" rx="6" class="cnt-bg" stroke="#1976D2" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="253" y="504" width="4" height="55" rx="2" fill="#1976D2"/>
+  <text x="270" y="524" font-size="13" font-weight="bold" fill="#1565C0">Sonarr</text>
+  <text x="330" y="524" font-size="10" class="t-muted">:8989</text>
+  <text x="270" y="542" font-size="9" class="t-muted">TV Series — automated management</text>
+
+  <!-- Radarr -->
+  <rect x="468" y="504" width="200" height="55" rx="6" class="cnt-bg" stroke="#E64A19" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="468" y="504" width="4" height="55" rx="2" fill="#E64A19"/>
+  <text x="485" y="524" font-size="13" font-weight="bold" fill="#D84315">Radarr</text>
+  <text x="543" y="524" font-size="10" class="t-muted">:7878</text>
+  <text x="485" y="542" font-size="9" class="t-muted">Movies — automated management</text>
+
+  <!-- Bazarr -->
+  <rect x="683" y="504" width="200" height="55" rx="6" class="cnt-bg" stroke="#7B1FA2" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="683" y="504" width="4" height="55" rx="2" fill="#7B1FA2"/>
+  <text x="700" y="524" font-size="13" font-weight="bold" fill="#6A1B9A">Bazarr</text>
+  <text x="756" y="524" font-size="10" class="t-muted">:6767</text>
+  <text x="700" y="542" font-size="9" class="t-muted">Automatic subtitles</text>
+
+  <!-- Prowlarr -->
+  <rect x="898" y="504" width="200" height="55" rx="6" class="cnt-bg" stroke="#00838F" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="898" y="504" width="4" height="55" rx="2" fill="#00838F"/>
+  <text x="915" y="524" font-size="13" font-weight="bold" fill="#006064">Prowlarr</text>
+  <text x="981" y="524" font-size="10" class="t-muted">:9696</text>
+  <text x="915" y="542" font-size="9" class="t-muted">Indexers — aggregator</text>
+
+  <!-- Row 2 containers -->
+  <!-- Profilarr -->
+  <rect x="253" y="572" width="200" height="55" rx="6" class="cnt-bg" stroke="#AD1457" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="253" y="572" width="4" height="55" rx="2" fill="#AD1457"/>
+  <text x="270" y="592" font-size="13" font-weight="bold" fill="#880E4F">Profilarr</text>
+  <text x="342" y="592" font-size="10" class="t-muted">:6868</text>
+  <text x="270" y="610" font-size="9" class="t-muted">Quality profiles for Arr-stack</text>
+
+  <!-- WUD -->
+  <rect x="468" y="572" width="200" height="55" rx="6" class="cnt-bg" stroke="#558B2F" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="468" y="572" width="4" height="55" rx="2" fill="#558B2F"/>
+  <text x="485" y="592" font-size="13" font-weight="bold" fill="#33691E">What's Up Docker</text>
+  <text x="485" y="610" font-size="9" class="t-muted">:3000 — Auto update (minor/patch)</text>
+
+  <!-- Portainer -->
+  <rect x="683" y="572" width="200" height="55" rx="6" class="cnt-bg" stroke="#0277BD" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="683" y="572" width="4" height="55" rx="2" fill="#0277BD"/>
+  <text x="700" y="592" font-size="13" font-weight="bold" fill="#01579B">Portainer</text>
+  <text x="772" y="592" font-size="10" class="t-muted">:9000</text>
+  <text x="700" y="610" font-size="9" class="t-muted">Docker management (WebUI)</text>
+
+  <!-- Deluge -->
+  <rect x="898" y="572" width="200" height="55" rx="6" class="cnt-bg" stroke="#283593" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="898" y="572" width="4" height="55" rx="2" fill="#283593"/>
+  <text x="915" y="592" font-size="13" font-weight="bold" fill="#1A237E">Deluge</text>
+  <text x="973" y="592" font-size="10" class="t-muted">:8112</text>
+  <text x="915" y="610" font-size="9" class="t-muted">Torrent — also :51413 (direct)</text>
+
+  <!-- BOTTOM ROW (outside auth group) -->
+
+  <!-- Arrow Caddy to Jellyfin (rate-limit, no auth) -->
+  <path d="M 1030 420 L 1415 420 L 1415 687 L 1130 687" fill="none" stroke="#00897B" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#arrow-teal)"/>
+  <text x="1425" y="560" font-size="9" fill="#00897B" font-weight="bold" transform="rotate(90, 1425, 560)">rate-limited, no auth</text>
+
+  <!-- Jellyfin -->
+  <rect x="930" y="660" width="200" height="55" rx="6" class="cnt-bg" stroke="#2E7D32" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="930" y="660" width="4" height="55" rx="2" fill="#2E7D32"/>
+  <text x="947" y="680" font-size="13" font-weight="bold" fill="#1B5E20">Jellyfin</text>
+  <text x="1008" y="680" font-size="10" class="t-muted">:8096</text>
+  <text x="947" y="698" font-size="9" class="t-muted">Media server (streaming)</text>
+
+  <!-- FlareSolverr -->
+  <rect x="370" y="660" width="200" height="55" rx="6" class="cnt-bg" stroke="#9E9E9E" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="370" y="660" width="4" height="55" rx="2" fill="#9E9E9E"/>
+  <text x="387" y="680" font-size="13" font-weight="bold" fill="#616161">FlareSolverr</text>
+  <text x="475" y="680" font-size="10" class="t-muted">:8191</text>
+  <text x="387" y="698" font-size="9" class="t-muted">CAPTCHA bypass (internal only)</text>
+
+  <!-- Rustic -->
+  <rect x="650" y="660" width="200" height="55" rx="6" class="cnt-bg" stroke="#795548" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="650" y="660" width="4" height="55" rx="2" fill="#795548"/>
+  <text x="667" y="680" font-size="13" font-weight="bold" fill="#4E342E">Rustic</text>
+  <text x="720" y="680" font-size="10" class="t-muted">one-shot</text>
+  <text x="667" y="698" font-size="9" class="t-muted">Encrypted backup to Backblaze B2</text>
+
+  <!-- Arrow Caddy logs to CrowdSec -->
+  <path d="M 510 390 L 510 360 L 460 360 L 460 330" fill="none" stroke="#7B1FA2" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-purple)"/>
+  <text x="395" y="352" font-size="9" fill="#7B1FA2" font-weight="bold">/var/log/caddy/</text>
+
+  <!-- Arrow systemd to Rustic container -->
+  <path d="M 1020 330 L 1020 355 L 750 355 L 750 660" fill="none" stroke="#F57F17" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+  <text x="870" y="348" font-size="9" fill="#F57F17" font-weight="bold">docker compose up rustic</text>
+
+  <!-- Arrow Rustic to Backblaze B2 -->
+  <path d="M 850 700 L 1500 700 L 1500 1230 L 870 1230" fill="none" stroke="#795548" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrow-brown)"/>
+  <text x="1510" y="960" font-size="10" fill="#795548" font-weight="bold" transform="rotate(90, 1510, 960)">encrypted backup (opendal:b2)</text>
+
+  <!-- FILESYSTEM / VOLUMES SECTION -->
+  <rect x="80" y="785" width="1440" height="370" rx="8" class="volumes-bg" stroke="#F9A825" stroke-width="1.5"/>
+  <text x="105" y="810" font-size="14" font-weight="bold" fill="#E65100">Volume Mounts — Which folder is in which container?</text>
+
+  <!-- Left column: /homemedia/apps/ -->
+  <text x="105" y="840" font-size="12" font-weight="bold" class="t-main" font-family="JetBrains Mono, Fira Code, Courier New, monospace">/homemedia/apps/</text>
+
+  <text x="115" y="860" font-size="11" class="t-mid" font-family="JetBrains Mono, Fira Code, Courier New, monospace">sonarr/config</text>
+  <text x="340" y="860" font-size="11" fill="#1565C0" font-weight="bold">Sonarr</text>
+
+  <text x="115" y="878" font-size="11" class="t-mid" font-family="JetBrains Mono, Fira Code, Courier New, monospace">radarr/config</text>
+  <text x="340" y="878" font-size="11" fill="#D84315" font-weight="bold">Radarr</text>
+
+  <text x="115" y="896" font-size="11" class="t-mid" font-family="JetBrains Mono, Fira Code, Courier New, monospace">bazarr/config</text>
+  <text x="340" y="896" font-size="11" fill="#6A1B9A" font-weight="bold">Bazarr</text>
+
+  <text x="115" y="914" font-size="11" class="t-mid" font-family="JetBrains Mono, Fira Code, Courier New, monospace">prowlarr/config</text>
+  <text x="340" y="914" font-size="11" fill="#006064" font-weight="bold">Prowlarr</text>
+
+  <text x="115" y="932" font-size="11" class="t-mid" font-family="JetBrains Mono, Fira Code, Courier New, monospace">profilarr/config</text>
+  <text x="340" y="932" font-size="11" fill="#880E4F" font-weight="bold">Profilarr</text>
+
+  <text x="115" y="950" font-size="11" class="t-mid" font-family="JetBrains Mono, Fira Code, Courier New, monospace">deluge/config</text>
+  <text x="340" y="950" font-size="11" fill="#1A237E" font-weight="bold">Deluge</text>
+
+  <text x="115" y="968" font-size="11" class="t-mid" font-family="JetBrains Mono, Fira Code, Courier New, monospace">jellyfin/{config, cache}</text>
+  <text x="340" y="968" font-size="11" fill="#1B5E20" font-weight="bold">Jellyfin</text>
+
+  <text x="115" y="986" font-size="11" class="t-mid" font-family="JetBrains Mono, Fira Code, Courier New, monospace">portainer/config</text>
+  <text x="340" y="986" font-size="11" fill="#01579B" font-weight="bold">Portainer</text>
+
+  <text x="115" y="1004" font-size="11" class="t-mid" font-family="JetBrains Mono, Fira Code, Courier New, monospace">caddy/{config, data, auth}</text>
+  <text x="340" y="1004" font-size="11" fill="#00695C" font-weight="bold">Caddy</text>
+
+  <text x="115" y="1022" font-size="11" class="t-mid" font-family="JetBrains Mono, Fira Code, Courier New, monospace">rustic/scripts</text>
+  <text x="340" y="1022" font-size="11" fill="#4E342E" font-weight="bold">Rustic</text>
+
+  <text x="115" y="1040" font-size="11" class="t-mid" font-family="JetBrains Mono, Fira Code, Courier New, monospace">wud/store</text>
+  <text x="340" y="1040" font-size="11" fill="#33691E" font-weight="bold">WUD</text>
+
+  <text x="115" y="1062" font-size="11" fill="#795548" font-family="JetBrains Mono, Fira Code, Courier New, monospace" font-weight="bold">apps/ (full directory)</text>
+  <text x="340" y="1062" font-size="11" fill="#795548" font-weight="bold">Rustic (backup B2)</text>
+
+  <!-- Separator line -->
+  <line x1="510" y1="835" x2="510" y2="1135" class="sep" stroke-width="1"/>
+
+  <!-- Right column: data dirs + host paths -->
+  <text x="535" y="840" font-size="12" font-weight="bold" class="t-main" font-family="JetBrains Mono, Fira Code, Courier New, monospace">/homemedia/ (data)</text>
+
+  <text x="545" y="860" font-size="11" class="t-mid" font-family="JetBrains Mono, Fira Code, Courier New, monospace">torrents/</text>
+  <text x="760" y="860" font-size="11" fill="#1A237E" font-weight="bold">Deluge</text>
+
+  <text x="545" y="878" font-size="11" class="t-mid" font-family="JetBrains Mono, Fira Code, Courier New, monospace">torrents/blackhole</text>
+  <text x="760" y="878" font-size="11" fill="#006064" font-weight="bold">Prowlarr</text>
+
+  <text x="545" y="896" font-size="11" class="t-mid" font-family="JetBrains Mono, Fira Code, Courier New, monospace">medias/</text>
+  <text x="760" y="896" font-size="11" fill="#6A1B9A" font-weight="bold">Bazarr</text>
+  <text x="825" y="896" font-size="11" fill="#1B5E20" font-weight="bold">+ Jellyfin (ro)</text>
+
+  <text x="545" y="918" font-size="11" class="t-mid" font-family="JetBrains Mono, Fira Code, Courier New, monospace">homemedia/ (full root)</text>
+  <text x="760" y="918" font-size="11" fill="#1565C0" font-weight="bold">Sonarr</text>
+  <text x="820" y="918" font-size="11" fill="#D84315" font-weight="bold">+ Radarr</text>
+  <text x="885" y="918" font-size="9" class="t-muted" font-style="italic">(hardlinks)</text>
+
+  <!-- Separator line 2 -->
+  <line x1="530" y1="935" x2="1050" y2="935" class="sep" stroke-width="1"/>
+
+  <text x="535" y="958" font-size="12" font-weight="bold" class="t-main" font-family="JetBrains Mono, Fira Code, Courier New, monospace">Host system paths</text>
+
+  <text x="545" y="978" font-size="11" class="t-mid" font-family="JetBrains Mono, Fira Code, Courier New, monospace">/var/run/docker.sock</text>
+  <text x="810" y="978" font-size="11" fill="#01579B" font-weight="bold">Portainer</text>
+  <text x="890" y="978" font-size="11" fill="#33691E" font-weight="bold">+ WUD</text>
+
+  <text x="545" y="996" font-size="11" class="t-mid" font-family="JetBrains Mono, Fira Code, Courier New, monospace">/etc/docker/docker-compose.yml</text>
+  <text x="810" y="996" font-size="11" fill="#33691E" font-weight="bold">WUD</text>
+
+  <text x="545" y="1014" font-size="11" class="t-mid" font-family="JetBrains Mono, Fira Code, Courier New, monospace">/etc/rustic/</text>
+  <text x="810" y="1014" font-size="11" fill="#4E342E" font-weight="bold">Rustic</text>
+
+  <text x="545" y="1032" font-size="11" class="t-mid" font-family="JetBrains Mono, Fira Code, Courier New, monospace">/var/log/caddy/</text>
+  <text x="810" y="1032" font-size="11" fill="#00695C" font-weight="bold">Caddy</text>
+  <text x="865" y="1032" font-size="11" fill="#7B1FA2" font-weight="bold">+ CrowdSec (read)</text>
+
+  <!-- Separator line 3 -->
+  <line x1="1070" y1="835" x2="1070" y2="1135" class="sep" stroke-width="1"/>
+
+  <!-- Right column 2: Legend -->
+  <text x="1095" y="840" font-size="12" font-weight="bold" class="t-main">Flow Legend</text>
+
+  <line x1="1100" y1="860" x2="1150" y2="860" stroke="#00897B" stroke-width="2" marker-end="url(#arrow-teal)"/>
+  <text x="1160" y="864" font-size="10" class="t-mid">Caddy reverse proxy</text>
+
+  <line x1="1100" y1="880" x2="1150" y2="880" stroke="#00897B" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#arrow-teal)"/>
+  <text x="1160" y="884" font-size="10" class="t-mid">Caddy no auth (rate-limited)</text>
+
+  <line x1="1100" y1="900" x2="1150" y2="900" stroke="#7B1FA2" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-purple)"/>
+  <text x="1160" y="904" font-size="10" class="t-mid">Logs to CrowdSec</text>
+
+  <line x1="1100" y1="920" x2="1150" y2="920" stroke="#795548" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrow-brown)"/>
+  <text x="1160" y="924" font-size="10" class="t-mid">Backup to Backblaze B2</text>
+
+  <line x1="1100" y1="940" x2="1150" y2="940" stroke="#F57F17" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+  <text x="1160" y="944" font-size="10" class="t-mid">systemd to container</text>
+
+  <line x1="1100" y1="960" x2="1150" y2="960" stroke="#7B1FA2" stroke-width="2" marker-end="url(#arrow-purple)"/>
+  <text x="1160" y="964" font-size="10" class="t-mid">iptables (CrowdSec Bouncer)</text>
+
+  <!-- Container color legend -->
+  <text x="1095" y="995" font-size="12" font-weight="bold" class="t-main">Container Colors</text>
+
+  <rect x="1100" y="1005" width="10" height="10" rx="2" fill="#1976D2"/>
+  <text x="1116" y="1015" font-size="9" class="t-mid">Sonarr</text>
+  <rect x="1170" y="1005" width="10" height="10" rx="2" fill="#E64A19"/>
+  <text x="1186" y="1015" font-size="9" class="t-mid">Radarr</text>
+  <rect x="1240" y="1005" width="10" height="10" rx="2" fill="#7B1FA2"/>
+  <text x="1256" y="1015" font-size="9" class="t-mid">Bazarr</text>
+  <rect x="1340" y="1005" width="10" height="10" rx="2" fill="#00838F"/>
+  <text x="1356" y="1015" font-size="9" class="t-mid">Prowlarr</text>
+
+  <rect x="1100" y="1025" width="10" height="10" rx="2" fill="#AD1457"/>
+  <text x="1116" y="1035" font-size="9" class="t-mid">Profilarr</text>
+  <rect x="1170" y="1025" width="10" height="10" rx="2" fill="#283593"/>
+  <text x="1186" y="1035" font-size="9" class="t-mid">Deluge</text>
+  <rect x="1240" y="1025" width="10" height="10" rx="2" fill="#2E7D32"/>
+  <text x="1256" y="1035" font-size="9" class="t-mid">Jellyfin</text>
+  <rect x="1340" y="1025" width="10" height="10" rx="2" fill="#00897B"/>
+  <text x="1356" y="1035" font-size="9" class="t-mid">Caddy</text>
+
+  <rect x="1100" y="1045" width="10" height="10" rx="2" fill="#0277BD"/>
+  <text x="1116" y="1055" font-size="9" class="t-mid">Portainer</text>
+  <rect x="1170" y="1045" width="10" height="10" rx="2" fill="#558B2F"/>
+  <text x="1186" y="1055" font-size="9" class="t-mid">WUD</text>
+  <rect x="1240" y="1045" width="10" height="10" rx="2" fill="#795548"/>
+  <text x="1256" y="1055" font-size="9" class="t-mid">Rustic</text>
+  <rect x="1340" y="1045" width="10" height="10" rx="2" fill="#9E9E9E"/>
+  <text x="1356" y="1055" font-size="9" class="t-mid">FlareSolverr</text>
+
+  <!-- Note about Rustic backup scope -->
+  <text x="1095" y="1085" font-size="11" font-weight="bold" fill="#795548">Rustic backs up:</text>
+  <text x="1105" y="1100" font-size="10" class="t-mid">apps/sonarr/config</text>
+  <text x="1105" y="1114" font-size="10" class="t-mid">apps/radarr/config</text>
+  <text x="1105" y="1128" font-size="10" class="t-mid">apps/prowlarr/config</text>
+  <text x="1105" y="1142" font-size="10" class="t-mid">apps/bazarr/config</text>
+  <text x="1300" y="1100" font-size="10" class="t-mid">apps/profilarr/config</text>
+  <text x="1300" y="1114" font-size="10" class="t-mid">to Backblaze B2</text>
+  <text x="1300" y="1128" font-size="10" class="t-mid">(encrypted, retention</text>
+  <text x="1300" y="1142" font-size="10" class="t-mid"> 7d + 2 weeks)</text>
+
+  <!-- BACKBLAZE B2 -->
+  <ellipse cx="750" cy="1230" rx="120" ry="30" class="b2-bg" stroke="#BF360C" stroke-width="2"/>
+  <text x="750" y="1235" text-anchor="middle" font-size="13" font-weight="bold" fill="#BF360C">Backblaze B2</text>
+
+  <!-- Direct port 51413 arrow from UFW to Deluge -->
+  <path d="M 840 144 L 840 175 L 1460 175 L 1460 599 L 1098 599" fill="none" stroke="#E65100" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-orange)"/>
+  <text x="1465" y="400" font-size="9" fill="#E65100" font-weight="bold" transform="rotate(90, 1465, 400)">:51413 - Deluge (BitTorrent P2P)</text>
+
+</svg>

@@ -1,56 +1,67 @@
 ---
 - name: Install ufw
-  apt: package=ufw state=present
+  ansible.builtin.apt:
+    package: ufw
+    state: present
 
 - name: Disable ufw
-  ufw: state=disabled
+  community.general.ufw:
+    state: disabled
 
 - name: Deny all incoming traffic
-  ufw:
+  community.general.ufw:
     policy: deny
     direction: incoming
   notify: Restart ufw
 
 - name: Allow all outgoing traffic
-  ufw:
+  community.general.ufw:
     policy: allow
     direction: outgoing
   notify: Restart ufw
 
-- name: Allow SSH traffic  
-  ufw: 
+- name: Allow SSH traffic
+  community.general.ufw:
     rule: limit
     port: '22'
     proto: tcp
   notify: Restart ufw
 
-- name: Allow deluged traffic # Secured by deluge protocol
-  ufw:
+- name: Allow BitTorrent incoming traffic
+  community.general.ufw:
     rule: allow
-    port: '58846'
+    port: '51413'
     proto: tcp
   notify: Restart ufw
 
-- name: Allow Plex Media Server traffic # Secured by PLEX
-  ufw: 
+- name: Allow BitTorrent incoming traffic (UDP)
+  community.general.ufw:
     rule: allow
-    port: '32400'
-    proto: tcp
+    port: '51413'
+    proto: udp
   notify: Restart ufw
 
 - name: Allow HTTP traffic
-  ufw:
+  community.general.ufw:
     rule: allow
     port: '80'
     proto: tcp
   notify: Restart ufw
 
 - name: Allow SSL/TLS traffic
-  ufw: 
+  community.general.ufw:
     rule: allow
     port: '443'
     proto: tcp
   notify: Restart ufw
 
+- name: Allow SSL/TLS traffic (UDP)
+  community.general.ufw:
+    rule: allow
+    port: '443'
+    proto: udp
+  notify: Restart ufw
+
 - name: Enable ufw
-  ufw: state=enabled
+  community.general.ufw:
+    state: enabled

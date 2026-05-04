@@ -1,17 +1,19 @@
-#jinja2: lstrip_blocks: "true", trim_blocks: "false"
+#jinja2: lstrip_blocks: True, trim_blocks: False
 services:
 
   deluge:
     image: lscr.io/linuxserver/deluge:latest
     container_name: deluge
     ports:
-      - 8112:8112
-      - 58846:58846
+      - 51413:6881
+      - 51413:6881/udp
+    expose:
+      - "8112"
     environment:
-      - "PUID={{ uid }}"
-      - "PGID={{ gid }}"
+      - "PUID={{ compose_uid }}"
+      - "PGID={{ compose_gid }}"
       - "TZ={{ timezone }}"
-      - UMASK_SET=022
+      - UMASK=022
       - WEBUI_PORT=8112
     volumes:
      - "{{ app_dir }}/deluge/config:/config"
@@ -20,22 +22,21 @@ services:
     labels:
       - wud.tag.include=^\d+\.\d+\.\d+$$
 
-  # Switch to stable version when available
   prowlarr:
-    image: lscr.io/linuxserver/prowlarr:develop 
+    image: lscr.io/linuxserver/prowlarr:latest 
     container_name: prowlarr
     expose:
       - "9696"
     environment:
-      - "PUID={{ uid }}"
-      - "PGID={{ gid }}"
+      - "PUID={{ compose_uid }}"
+      - "PGID={{ compose_gid }}"
       - "TZ={{ timezone }}"
     volumes:
       - "{{ app_dir }}/prowlarr/config:/config"
       - "{{ torrents_dir }}/blackhole:/blackhole"
     restart: unless-stopped
     labels:
-      - wud.tag.include=^\d+\.\d+\.\d+-develop$$
+      - wud.tag.include=^\d+\.\d+\.\d+$$
 
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
@@ -43,8 +44,8 @@ services:
     expose:
       - "8989"
     environment:
-      - "PUID={{ uid }}"
-      - "PGID={{ gid }}"
+      - "PUID={{ compose_uid }}"
+      - "PGID={{ compose_gid }}"
       - "TZ={{ timezone }}"
     volumes:
       - "{{ app_dir }}/sonarr/config:/config"
@@ -59,8 +60,8 @@ services:
     expose:
       - "7878"
     environment:
-      - "PUID={{ uid }}"
-      - "PGID={{ gid }}"
+      - "PUID={{ compose_uid }}"
+      - "PGID={{ compose_gid }}"
       - "TZ={{ timezone }}"
     volumes:
       - "{{ app_dir }}/radarr/config:/config"
@@ -75,8 +76,8 @@ services:
     expose:
       - "6767"
     environment:
-      - "PUID={{ uid }}"
-      - "PGID={{ gid }}"
+      - "PUID={{ compose_uid }}"
+      - "PGID={{ compose_gid }}"
       - "TZ={{ timezone }}"
     volumes:
       - "{{ app_dir }}/bazarr/config:/config"
@@ -85,61 +86,22 @@ services:
     labels:
       - wud.tag.include=^\d+\.\d+\.\d+$$
 
-  plex_server:
-    image: lscr.io/linuxserver/plex:latest
-    container_name: plex
-    ports:
-      - 32400:32400
-    environment:
-      - "PUID={{ uid }}"
-      - "PGID={{ gid }}"
-      - VERSION=docker
-      - "TZ={{ timezone }}"
-      - DOCKER_MODS=linuxserver/mods:plex-absolute-hama
-    volumes:
-      - "{{ app_dir }}/plex/config:/config"
-      - "{{ media_dir }}:{{ media_dir }}"
-    restart: unless-stopped
-    labels:
-      - wud.tag.include=^\d+\.\d+\.\d+$$
-      
-{% if enable_duplicacy == true %}
-  duplicacy:
-    image: saspus/duplicacy-web:latest
-    container_name: duplicacy
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
     expose:
-      - "3875"
-    environment:
-      - "USR_ID={{ uid }}"
-      - "GRP_ID={{ gid }}"
+      - "8096"
+    environment: 
+      - "PUID={{ compose_uid }}"
+      - "PGID={{ compose_gid }}"
       - "TZ={{ timezone }}"
     volumes:
-      - "{{ app_dir }}/duplicacy/config:/config"
-      - "{{ app_dir }}/duplicacy/logs:/logs"
-      - "{{ root_dir }}:/root_dir"
+      - "{{ app_dir }}/jellyfin/config:/config"
+      - "{{ app_dir }}/jellyfin/cache:/cache"
+      - "{{ media_dir }}:{{ media_dir }}:ro"
     restart: unless-stopped
     labels:
       - wud.tag.include=^\d+\.\d+\.\d+$$
-{% endif %}
-
-{% if enable_duplicati == true %}
-  duplicati:
-    image: lscr.io/linuxserver/duplicati:latest
-    container_name: duplicati
-    expose:
-      - "8200"
-    environment:
-      - "PUID={{ uid }}"
-      - "PGID={{ gid }}"
-      - "TZ={{ timezone }}"
-    volumes:
-      - "{{ app_dir }}/duplicati/config:/config"
-      - "{{ app_dir }}/duplicati/source:/source"
-      - "{{ root_dir }}:/backups"
-    restart: unless-stopped
-    labels:
-      - wud.tag.include=^\d+\.\d+\.\d+$$
-{% endif %}
 
 {% if enable_flaresolverr == true %}
   flaresolverr:
@@ -152,24 +114,9 @@ services:
       - "TZ={{ timezone }}"
     restart: unless-stopped
     labels:
-    - wud.tag.include=^\d+\.\d+\.\d+$$
+      - wud.tag.include=^\d+\.\d+\.\d+$$
 {% endif %}
 
-{% if enable_overseerr == true %}
-  overseerr:
-    image: lscr.io/linuxserver/overseerr:latest
-    container_name: overseerr
-    environment:
-    - "PUID={{ uid }}"
-    - "PGID={{ gid }}"
-    - "TZ={{ timezone }}"
-    volumes:
-      - "{{ app_dir }}/overseerr/config:/config"
-    ports:
-      - 5055:5055
-    labels:
-    - wud.tag.include=^\d+\.\d+\.\d+$$
-{% endif %}
 
   portainer:
     image: portainer/portainer-ce:latest
@@ -191,22 +138,40 @@ services:
     ports:
       - 80:80
       - 443:443
+      - 443:443/udp
     volumes:
       - "{{ app_dir }}/caddy/config:/config"
       - "{{ app_dir }}/caddy/data:/data"
-      - "{{ app_dir }}/caddy/Caddyfile:/etc/caddy/Caddyfile"
+      - "{{ app_dir }}/caddy/Caddyfile:{{ caddy_container_caddyfile }}"
       - "{{ app_dir }}/caddy/auth:/auth"
       - "{{ caddy_access_log_path }}:{{ caddy_access_log_path }}"
     environment:
       - "DOMAIN={{ domain_name }}"
       - "CADDY_LOG_PATH={{ caddy_access_log_path }}"
       - CADDY_AUTH_USERS_PATH=/auth/users.json
+      - "CADDY_JWT_SHARED_KEY={{ caddy_jwt_shared_key }}"
     restart: unless-stopped
     labels:
       - wud.watch=false
 
+  rustic:
+    image: ghcr.io/rustic-rs/rustic:latest
+    container_name: rustic
+    user: "{{ compose_uid }}:{{ compose_gid }}"
+    entrypoint: ["/bin/sh", "/scripts/backup.sh"]
+    volumes:
+      - /bin/busybox:/bin/sh:ro
+      - "{{ app_dir }}/rustic/scripts:/scripts:ro"
+      - "{{ app_dir }}:{{ app_dir }}"
+      - "/etc/rustic:/etc/rustic"
+    environment:
+      - "TZ={{ timezone }}"
+    restart: "no"
+    labels:
+      - wud.tag.include=^\d+\.\d+\.\d+$$
+
   whatsupdocker:
-    image: fmartinou/whats-up-docker
+    image: getwud/wud
     container_name: wud
     expose:
       - "3000"
@@ -215,10 +180,48 @@ services:
       - "{{ app_dir }}/wud/store:/store"
       - /etc/docker/docker-compose.yml:/wud/docker-compose.yml
     environment:
-      - "TZ={{ timezone }}"
-      - WUD_TRIGGER_DOCKERCOMPOSE_SAFEUPDATE_THRESHOLD=minor
-      - WUD_TRIGGER_DOCKERCOMPOSE_SAFEUPDATE_FILE=/wud/docker-compose.yml
-      - "WUD_TRIGGER_DOCKERCOMPOSE_SAFEUPDATE_PRUNE={{ wud_prune_old_image }}"
-      - WUD_WATCHER_SAFEUPDATE_WATCHBYDEFAULT=true 
-      - "WUD_WATCHER_SAFEUPDATE_CRON={{ wud_update_cron }}"
+      - "TZ={{ timezone }}"                                                        # Container timezone
+      - WUD_TRIGGER_DOCKERCOMPOSE_SAFEUPDATE_THRESHOLD=minor                       # Minimum update threshold to trigger (minor = minor + patch)
+      - WUD_TRIGGER_DOCKERCOMPOSE_SAFEUPDATE_FILE=/wud/docker-compose.yml          # Path to the docker-compose file to update
+      - "WUD_TRIGGER_DOCKERCOMPOSE_SAFEUPDATE_PRUNE={{ wud_prune_old_image }}"     # Remove old image after update
+      - WUD_TRIGGER_DOCKERCOMPOSE_SAFEUPDATE_BACKUP=false                          # Backup docker-compose file as .back before updating
+      - WUD_WATCHER_SAFEUPDATE_WATCHBYDEFAULT=true                                 # Watch all containers by default
+      - "WUD_WATCHER_SAFEUPDATE_CRON={{ wud_update_cron }}"                        # Cron schedule for update checks
+      - WUD_WATCHER_SAFEUPDATE_WATCHALL=false                                      # Only watch running containers (not stopped/paused)
+      - WUD_WATCHER_SAFEUPDATE_JITTER=120000                                       # Random delay (ms) before hitting registries to avoid rate limiting
+      - "WUD_REGISTRY_LSCR_PRIVATE_TOKEN={{ wud_lscr_token }}"                     # GitHub token to access the LinuxServer registry
+      - "WUD_REGISTRY_LSCR_PRIVATE_USERNAME={{ wud_lscr_user }}"                   # GitHub username for the LinuxServer registry
+      - "WUD_REGISTRY_GHCR_PRIVATE_USERNAME={{ wud_lscr_token }}"
+      - "WUD_REGISTRY_GHCR_PRIVATE_TOKEN={{ wud_lscr_token }}" 
     restart: unless-stopped
+
+  profilarr:
+    image: santiagosayshey/profilarr:latest
+    container_name: profilarr
+    expose:
+      - "6868"
+    volumes:
+      - "{{ app_dir }}/profilarr/config:/config"
+    environment:
+      - "PUID={{ compose_uid }}"
+      - "PGID={{ compose_gid }}"
+      - "TZ={{ timezone }}"
+    restart: unless-stopped
+    labels:
+      - wud.tag.include=^\d+\.\d+\.\d+$$
+
+  unpackerr:
+    image: golift/unpackerr
+    container_name: unpackerr
+    user: "{{ compose_uid }}:{{ compose_gid }}"
+    volumes:
+      - "{{ root_dir }}:{{ root_dir }}"
+    environment:
+      - "TZ={{ timezone }}"
+      - UN_SONARR_0_URL=http://sonarr:8989
+      - "UN_SONARR_0_API_KEY={{ compose_sonarr_api_key | default('') }}"
+      - UN_RADARR_0_URL=http://radarr:7878
+      - "UN_RADARR_0_API_KEY={{ compose_radarr_api_key | default('') }}"
+    restart: unless-stopped
+    labels:
+      - wud.tag.include=^\d+\.\d+\.\d+$$
